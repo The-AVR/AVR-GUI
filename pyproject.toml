@@ -1,0 +1,41 @@
+[tool.poetry]
+    name        = "bell-avr-gui"
+    version     = "0.1.0"
+    description = "GUI ground station for Bell AVR"
+    license     = "MIT"
+    readme      = "README.md"
+    homepage    = "https://github.com/bellflight/AVR-GUI"
+    authors     = ["Nathan Vaughn <nvaughn51@gmail.com>"]
+
+[tool.poetry.dependencies]
+    python             = ">=3.9,<3.12"
+    numpy              = "^1.23.5"
+    scipy              = "^1.9.3"
+    colour             = "^0.1.5"
+    loguru             = "^0.6.0"
+    pyside6-essentials = "^6.4.1"
+    paho-mqtt          = "^1.6.1"
+    bell-avr-libraries = { extras = ["mqtt", "serial"], version = "^0.1.12" }
+
+[tool.poetry.group.dev.dependencies]
+    black            = "^22.10.0"
+    isort            = "^5.10.1"
+    autoflake        = "^1.7.7"
+    pyleft           = "^1.1.0"
+    pyproject-flake8 = "^6.0.0.post1"
+
+[tool.pyright]
+    typeCheckingMode = "basic"
+
+[tool.isort]
+    profile = "black"
+
+[tool.autoflake]
+    recursive = true
+
+[tool.flake8]
+    exclude = ".venv"
+    # E501 is line too long
+    # E203 is whitespace before ':'
+    # W503 is line break before binary operator
+    ignore = "E501, E203, W503"

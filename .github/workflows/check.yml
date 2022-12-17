@@ -1,0 +1,58 @@
+name: Python Checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  python-checks:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install poetry
+        run: |
+          python -m pip install pip wheel pipx --upgrade
+          pipx install poetry
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version-file: .python-version
+          cache: poetry
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: npm
+
+      - name: Install Python Dependencies
+        run: poetry install
+
+      - name: Install Node Dependencies
+        run: npm install
+
+      - name: Check Formatting
+        run: poetry run python -m black ${{ github.workspace }} --check
+
+      - name: Check Import Order
+        run: poetry run python -m isort ${{ github.workspace }} --check
+
+      - name: Check for Unused Imports
+        run: poetry run python -m autoflake ${{ github.workspace }} --check
+
+      - name: Check Type Hints
+        run: poetry run python -m pyleft ${{ github.workspace }}
+
+      - name: Check Typing
+        run: npx pyright ${{ github.workspace }}
+
+      - name: Linting
+        run: poetry run python -m pflake8 ${{ github.workspace }}
