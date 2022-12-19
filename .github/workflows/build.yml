@@ -36,7 +36,7 @@ jobs:
       - name: Build GUI
         run: poetry run python build.py
 
-      - name: Test GUI
+      - name: Test GUI Bundle
         shell: pwsh
         run: ./dist/AVRGUI.*.exe --test-bundle
 
