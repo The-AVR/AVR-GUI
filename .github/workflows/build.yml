@@ -34,7 +34,7 @@ jobs:
         run: poetry install --only main
 
       - name: Build GUI
-        run: poetry run python GUI/build.py
+        run: poetry run python build.py
 
       - name: Test GUI
         shell: pwsh
