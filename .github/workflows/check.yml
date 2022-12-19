@@ -9,4 +9,4 @@ on:
 
 jobs:
   checks:
-    uses: bellflight/github-actions/avr_python_checks.yml@main
+    uses: bellflight/github-actions/.github/workflows/avr_python_checks.yml@main

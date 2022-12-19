@@ -31,7 +31,7 @@ jobs:
           cache: poetry
 
       - name: Install Python Dependencies
-        run: poetry install
+        run: poetry install --only main
 
       - name: Build GUI
         run: poetry run python GUI/build.py
