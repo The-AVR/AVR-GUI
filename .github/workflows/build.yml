@@ -34,6 +34,7 @@ jobs:
         run: poetry install --only main
 
       - name: Get Short SHA
+        shell: bash
         run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Build GUI
