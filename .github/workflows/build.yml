@@ -31,7 +31,7 @@ jobs:
           cache: poetry
 
       - name: Install Python Dependencies
-        run: poetry install --only main
+        run: poetry install --only main --sync
 
       - name: Get Short SHA
         shell: bash
