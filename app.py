@@ -1,6 +1,9 @@
 import argparse
 import sys
 
+from loguru import logger
+from PySide6 import QtCore, QtGui, QtWidgets
+
 from app.lib.enums import ConnectionState
 from app.lib.qt_icon import set_icon
 from app.tabs.autonomy import AutonomyWidget
@@ -12,8 +15,6 @@ from app.tabs.pcc_tester import PCCTesterWidget
 from app.tabs.thermal_view_control import ThermalViewControlWidget
 from app.tabs.vmc_control import VMCControlWidget
 from app.tabs.vmc_telemetry import VMCTelemetryWidget
-from loguru import logger
-from PySide6 import QtCore, QtGui, QtWidgets
 
 
 class TabBar(QtWidgets.QTabBar):

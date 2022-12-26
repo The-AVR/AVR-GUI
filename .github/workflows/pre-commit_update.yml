@@ -1,0 +1,10 @@
+name: Pre-Commit Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 8 * * 1
+
+jobs:
+  checks:
+    uses: bellflight/github-actions/.github/workflows/pre-commit_update.yml@main
