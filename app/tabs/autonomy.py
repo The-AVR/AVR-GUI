@@ -10,6 +10,12 @@ from bell.avr.mqtt.payloads import (
 from PySide6 import QtCore, QtWidgets
 
 from ..lib.color import wrap_text
+from ..lib.custom_colors import (
+    AUTONOMY_AUTONOMOUS_DISABLED_COLOR,
+    AUTONOMY_AUTONOMOUS_ENABLED_COLOR,
+    AUTONOMY_DROP_DISABLED_COLOR,
+    AUTONOMY_DROP_ENABLED_COLOR,
+)
 from .base import BaseTabWidget
 
 
@@ -106,10 +112,10 @@ class AutonomyWidget(BaseTabWidget):
 
         if state:
             text = "Drop Enabled"
-            color = "green"
+            color = AUTONOMY_DROP_ENABLED_COLOR
         else:
             text = "Drop Disabled"
-            color = "red"
+            color = AUTONOMY_DROP_DISABLED_COLOR
 
         self.building_labels[number].setText(wrap_text(text, color))
 
@@ -130,9 +136,9 @@ class AutonomyWidget(BaseTabWidget):
 
         if state:
             text = "Autonomous Enabled"
-            color = "green"
+            color = AUTONOMY_AUTONOMOUS_ENABLED_COLOR
         else:
             text = "Autonomous Disabled"
-            color = "red"
+            color = AUTONOMY_AUTONOMOUS_DISABLED_COLOR
 
         self.autonomous_label.setText(wrap_text(text, color))

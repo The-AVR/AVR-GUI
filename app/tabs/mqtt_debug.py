@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import contextlib
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from bell.avr.mqtt.constants import MQTTTopicPayload, MQTTTopics
 from PySide6 import QtCore, QtGui, QtWidgets
 
+from ..lib.custom_colors import (
+    MQTT_DEBUGGER_DATA_VIEW_BACKGROUND_COLOR,
+    MQTT_DEBUGGER_TOPIC_FLASH_COLOR,
+)
 from .base import BaseTabWidget
 
 
@@ -146,6 +150,11 @@ class MQTTDebugWidget(BaseTabWidget):
         # stop/start state
         self.running = False
 
+        # get default color
+        self.TREE_WIDGET_ITEM_DEFAULT_BACKGROUND_COLOR = (
+            QtWidgets.QTreeWidgetItem().background(0).color()
+        )
+
     def build(self) -> None:
         """
         Build the layout
@@ -173,7 +182,9 @@ class MQTTDebugWidget(BaseTabWidget):
 
         self.data_view = QtWidgets.QTextEdit()
         self.data_view.setReadOnly(True)
-        self.data_view.setStyleSheet("background-color: rgb(220, 220, 220)")
+        self.data_view.setStyleSheet(
+            f"background-color: {MQTT_DEBUGGER_DATA_VIEW_BACKGROUND_COLOR.hex}"
+        )
         viewer_splitter.addWidget(self.data_view)
 
         viewer_layout.addWidget(viewer_splitter)
@@ -329,14 +340,20 @@ class MQTTDebugWidget(BaseTabWidget):
         self.data_view.setText(payload)
 
     def set_item_background(
-        self, item: QtWidgets.QTreeWidgetItem, color: Tuple[int, int, int]
+        self,
+        item: QtWidgets.QTreeWidgetItem,
+        color: Union[Tuple[int, int, int], QtGui.QColor],
     ) -> None:
         """
         Set the background color for an item.
         """
         # a runtime error is thrown if the item is already deleted (disconnected)
         with contextlib.suppress(RuntimeError):
-            item.setBackground(0, QtGui.QColor(*color))
+            # convert tuple to color
+            if isinstance(color, tuple):
+                color = QtGui.QColor(*color)
+
+            item.setBackground(0, color)
 
     def blink_item(self, item: QtWidgets.QTreeWidgetItem, topic: str) -> None:
         """
@@ -349,11 +366,11 @@ class MQTTDebugWidget(BaseTabWidget):
             timer.deleteLater()
         else:
             # otherwise, set background to grey
-            self.set_item_background(item, (220, 220, 220))
+            self.set_item_background(item, MQTT_DEBUGGER_TOPIC_FLASH_COLOR.rgb_255)
 
         # start new timer to clear background
         timer = QtCore.QTimer()
-        timer.timeout.connect(lambda: self.set_item_background(item, (255, 255, 255)))  # type: ignore
+        timer.timeout.connect(lambda: self.set_item_background(item, self.TREE_WIDGET_ITEM_DEFAULT_BACKGROUND_COLOR))  # type: ignore
         timer.setSingleShot(True)
         timer.start(100)
 

@@ -12,6 +12,10 @@ from PySide6 import QtCore, QtGui, QtSvgWidgets, QtWidgets
 from ..lib.calc import constrain, normalize_value
 from ..lib.color import smear_color
 from ..lib.config import IMG_DIR
+from ..lib.custom_colors import (
+    MOVING_MAP_ALTITUDE_MAX_COLOR,
+    MOVING_MAP_ALTITUDE_MIN_COLOR,
+)
 from .base import BaseTabWidget
 
 
@@ -456,15 +460,15 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
         # initially was brown to light blue, but was pointed out that
         # it was hard to distinguish for color blind individuals
         color = smear_color(
-            (14, 11, 191),
-            (191, 11, 14),
+            MOVING_MAP_ALTITUDE_MIN_COLOR,
+            MOVING_MAP_ALTITUDE_MAX_COLOR,
             value=-z,
             min_value=0,
             max_value=20,
         )
 
         # draw track
-        track_pen = QtGui.QPen(QtGui.QColor(color[0], color[1], color[2], 200))
+        track_pen = QtGui.QPen(QtGui.QColor(*color.rgb_255, 200))
         track_pen.setWidth(3)
         self._tracks.append(
             self.canvas.addLine(

@@ -10,6 +10,15 @@ from bell.avr.mqtt.payloads import (
 from PySide6 import QtCore, QtWidgets
 
 from ..lib.color import wrap_text
+from ..lib.custom_colors import (
+    BLACK_COLOR,
+    BLUE_COLOR,
+    GREEN_COLOR,
+    RED_COLOR,
+    VMC_CONTROL_SERVO_CLOSED_COLOR,
+    VMC_CONTROL_SERVO_OPEN_COLOR,
+    WHITE_COLOR,
+)
 from .base import BaseTabWidget
 
 
@@ -36,23 +45,27 @@ class VMCControlWidget(BaseTabWidget):
         led_groupbox.setLayout(led_layout)
 
         red_led_button = QtWidgets.QPushButton("Red")
-        red_led_button.setStyleSheet("background-color: red")
-        red_led_button.clicked.connect(lambda: self.set_led((255, 255, 0, 0)))  # type: ignore
+        red_led_button.setStyleSheet(f"background-color: {RED_COLOR.hex}")
+        red_led_button.clicked.connect(lambda: self.set_led((255, *RED_COLOR.rgb_255)))  # type: ignore
         led_layout.addWidget(red_led_button)
 
         green_led_button = QtWidgets.QPushButton("Green")
-        green_led_button.setStyleSheet("background-color: green")
-        green_led_button.clicked.connect(lambda: self.set_led((255, 0, 255, 0)))  # type: ignore
+        green_led_button.setStyleSheet(f"background-color: {GREEN_COLOR.hex}")
+        green_led_button.clicked.connect(lambda: self.set_led((255, *GREEN_COLOR.rgb_255)))  # type: ignore
         led_layout.addWidget(green_led_button)
 
         blue_led_button = QtWidgets.QPushButton("Blue")
-        blue_led_button.setStyleSheet("background-color: blue; color: white")
-        blue_led_button.clicked.connect(lambda: self.set_led((255, 0, 0, 255)))  # type: ignore
+        blue_led_button.setStyleSheet(
+            f"background-color: {BLUE_COLOR.hex}; color: {WHITE_COLOR.hex}"
+        )
+        blue_led_button.clicked.connect(lambda: self.set_led((255, *BLUE_COLOR.rgb_255)))  # type: ignore
         led_layout.addWidget(blue_led_button)
 
         clear_led_button = QtWidgets.QPushButton("Clear")
-        clear_led_button.setStyleSheet("background-color: white")
-        clear_led_button.clicked.connect(lambda: self.set_led((0, 0, 0, 0)))  # type: ignore
+        clear_led_button.setStyleSheet(
+            f"background-color: {WHITE_COLOR.hex}; color: {BLACK_COLOR.hex}"
+        )
+        clear_led_button.clicked.connect(lambda: self.set_led((0, *BLACK_COLOR.rgb_255)))  # type: ignore
         led_layout.addWidget(clear_led_button)
 
         layout.addWidget(led_groupbox, 0, 0, 3, 1)
@@ -127,10 +140,10 @@ class VMCControlWidget(BaseTabWidget):
 
         if action == "open":
             text = "Opened"
-            color = "blue"
+            color = VMC_CONTROL_SERVO_OPEN_COLOR
         else:
             text = "Closed"
-            color = "chocolate"
+            color = VMC_CONTROL_SERVO_CLOSED_COLOR
 
         self.servo_labels[number].setText(wrap_text(text, color))
 

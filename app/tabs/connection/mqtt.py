@@ -6,6 +6,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from ...lib.color import wrap_text
 from ...lib.config import config
+from ...lib.custom_colors import CONNECTION_STATE_COLOR_LOOKUP
 from ...lib.enums import ConnectionState
 from ...lib.widgets import IntLineEdit
 
@@ -177,14 +178,6 @@ class MQTTConnectionWidget(QtWidgets.QWidget):
         """
         Set the connected state of the MQTT connection widget elements.
         """
-        color_lookup = {
-            ConnectionState.connected: "Green",
-            ConnectionState.connecting: "DarkGoldenRod",
-            ConnectionState.disconnecting: "DarkGoldenRod",
-            ConnectionState.disconnected: "Red",
-            ConnectionState.failure: "Red",
-        }
-
         connected = connection_state == ConnectionState.connected
         disconnected = connection_state in [
             ConnectionState.failure,
@@ -192,7 +185,7 @@ class MQTTConnectionWidget(QtWidgets.QWidget):
         ]
 
         self.state_label.setText(
-            f"State: {wrap_text(connection_state.name.title(), color_lookup[connection_state])}"
+            f"State: {wrap_text(connection_state.name.title(), CONNECTION_STATE_COLOR_LOOKUP[connection_state])}"
         )
 
         self.disconnect_button.setEnabled(connected)
