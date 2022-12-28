@@ -150,11 +150,6 @@ class MQTTDebugWidget(BaseTabWidget):
         # stop/start state
         self.running = False
 
-        # get default color
-        self.TREE_WIDGET_ITEM_DEFAULT_BACKGROUND_COLOR = (
-            QtWidgets.QTreeWidgetItem().background(0).color()
-        )
-
     def build(self) -> None:
         """
         Build the layout
@@ -370,7 +365,8 @@ class MQTTDebugWidget(BaseTabWidget):
 
         # start new timer to clear background
         timer = QtCore.QTimer()
-        timer.timeout.connect(lambda: self.set_item_background(item, self.TREE_WIDGET_ITEM_DEFAULT_BACKGROUND_COLOR))  # type: ignore
+        # color doesn't matter, just 100% transparent
+        timer.timeout.connect(lambda: self.set_item_background(item, QtGui.QColor(0, 0, 0, 0)))  # type: ignore
         timer.setSingleShot(True)
         timer.start(100)
 

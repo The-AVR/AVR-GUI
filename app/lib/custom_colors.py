@@ -1,7 +1,22 @@
+import os
+
 import darkdetect
 
 from .color import Color
+from .config import config
 from .enums import ConnectionState
+
+if config.force_color_mode == "light":
+    # user has forced light mode
+    IS_DARK = False
+elif config.force_color_mode == "dark":
+    # user has forced dark mode
+    IS_DARK = True
+else:
+    # try our best
+    # Qt on Windows renders light even if OS is set to dark mode
+    # (in my limited testing)
+    IS_DARK = darkdetect.isDark() and os.name != "nt"
 
 BLACK_COLOR = Color(red=0, green=0, blue=0)
 WHITE_COLOR = Color(red=1, green=1, blue=1)
@@ -12,7 +27,7 @@ BLUE_COLOR = Color(blue=1)
 MQTT_DEBUGGER_TOPIC_FLASH_COLOR = Color("#DCDCDC")
 MQTT_DEBUGGER_DATA_VIEW_BACKGROUND_COLOR = Color("#DCDCDC")
 
-if darkdetect.isDark():
+if IS_DARK:
     MQTT_DEBUGGER_TOPIC_FLASH_COLOR = Color("#646464")
     MQTT_DEBUGGER_DATA_VIEW_BACKGROUND_COLOR = Color("#646464")
 
@@ -23,6 +38,7 @@ VMC_TELEMETRY_DISARMED_COLOR = Color("#b8860b")  # darkgoldenrod
 
 MOVING_MAP_ALTITUDE_MIN_COLOR = Color("#0e0bbf")
 MOVING_MAP_ALTITUDE_MAX_COLOR = Color("#bf0b0e")
+MOVING_MAP_GROUND_COLOR = Color("#785a08")
 
 VMC_CONTROL_SERVO_OPEN_COLOR = Color("#0000ff")  # blue
 VMC_CONTROL_SERVO_CLOSED_COLOR = Color("#d2691e")  # chocolate
@@ -39,7 +55,7 @@ AUTONOMY_AUTONOMOUS_DISABLED_COLOR = Color("#ff0000")  # red
 
 DISPLAY_LINE_EDIT_BACKGROUND_COLOR = Color("#DCDCDC")
 
-if darkdetect.isDark():
+if IS_DARK:
     DISPLAY_LINE_EDIT_BACKGROUND_COLOR = Color("#646464")
 
 CONNECTED_STATE_COLOR = Color("#008000")  # green

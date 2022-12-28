@@ -14,8 +14,7 @@ class Color(Color_):
 
     @property
     def rgb_255(self) -> Tuple[int, int, int]:
-        print(self.rgb)
-        return tuple([math.floor(i * 255) for i in self.rgb])
+        return tuple(math.floor(i * 255) for i in self.rgb)
 
 
 def smear_color(

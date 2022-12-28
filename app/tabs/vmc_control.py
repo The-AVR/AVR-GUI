@@ -45,12 +45,16 @@ class VMCControlWidget(BaseTabWidget):
         led_groupbox.setLayout(led_layout)
 
         red_led_button = QtWidgets.QPushButton("Red")
-        red_led_button.setStyleSheet(f"background-color: {RED_COLOR.hex}")
+        red_led_button.setStyleSheet(
+            f"background-color: {RED_COLOR.hex}; color: {BLACK_COLOR.hex}"
+        )
         red_led_button.clicked.connect(lambda: self.set_led((255, *RED_COLOR.rgb_255)))  # type: ignore
         led_layout.addWidget(red_led_button)
 
         green_led_button = QtWidgets.QPushButton("Green")
-        green_led_button.setStyleSheet(f"background-color: {GREEN_COLOR.hex}")
+        green_led_button.setStyleSheet(
+            f"background-color: {GREEN_COLOR.hex}; color: {BLACK_COLOR.hex}"
+        )
         green_led_button.clicked.connect(lambda: self.set_led((255, *GREEN_COLOR.rgb_255)))  # type: ignore
         led_layout.addWidget(green_led_button)
 

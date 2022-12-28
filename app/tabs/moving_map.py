@@ -13,8 +13,10 @@ from ..lib.calc import constrain, normalize_value
 from ..lib.color import smear_color
 from ..lib.config import IMG_DIR
 from ..lib.custom_colors import (
+    BLACK_COLOR,
     MOVING_MAP_ALTITUDE_MAX_COLOR,
     MOVING_MAP_ALTITUDE_MIN_COLOR,
+    MOVING_MAP_GROUND_COLOR,
 )
 from .base import BaseTabWidget
 
@@ -231,7 +233,7 @@ class DroneAltitudeWidget(QtWidgets.QWidget):
         self.canvas.addItem(self.drone_icon)
 
         # add ground
-        ground_pen = QtGui.QPen(QtGui.QColor(120, 90, 8, 255))
+        ground_pen = QtGui.QPen(QtGui.QColor(*MOVING_MAP_GROUND_COLOR.rgb_255))
         ground_pen.setWidth(self.GROUND_WIDTH)
         self.canvas.addLine(
             0, self.CANVAS_HEIGHT, self.CANVAS_WIDTH, self.CANVAS_HEIGHT, ground_pen
@@ -338,7 +340,7 @@ class InfiniteGridGraphicsScene(QtWidgets.QGraphicsScene):
         """
         Draws a grid within the given viewport.
         """
-        grid_pen = QtGui.QPen(QtGui.QColor(0, 0, 0, 122))
+        grid_pen = QtGui.QPen(QtGui.QColor(*BLACK_COLOR.rgb_255, 122))
         grid_pen.setWidth(1)
 
         # dashed line causes weird rendering issues when scrolled off the screen
