@@ -4,7 +4,6 @@ import math
 from enum import Enum, auto
 from typing import List, Optional, Tuple
 
-import colour
 import numpy as np
 import scipy.interpolate
 from bell.avr.mqtt.payloads import (
@@ -20,6 +19,12 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from ..lib.calc import constrain, map_value
 from ..lib.color import wrap_text
 from ..lib.config import config
+from ..lib.custom_colors import (
+    THERMAL_VIEW_CONTROL_LASER_OFF,
+    THERMAL_VIEW_CONTROL_LASER_ON,
+    THERMAL_VIEW_CONTROL_MAX_COLOR,
+    THERMAL_VIEW_CONTROL_MIN_COLOR,
+)
 from ..lib.widgets import DoubleLineEdit
 from .base import BaseTabWidget
 
@@ -78,7 +83,9 @@ class ThermalView(QtWidgets.QWidget):
         self.colors = [
             (int(c.red * 255), int(c.green * 255), int(c.blue * 255))
             for c in list(
-                colour.Color("indigo").range_to(colour.Color("red"), self.COLORDEPTH)
+                THERMAL_VIEW_CONTROL_MIN_COLOR.range_to(
+                    THERMAL_VIEW_CONTROL_MAX_COLOR, self.COLORDEPTH
+                )
             )
         ]
 
@@ -437,12 +444,12 @@ class ThermalViewControlWidget(BaseTabWidget):
             topic = "avr/pcm/set_laser_on"
             payload = AvrPcmSetLaserOnPayload()
             text = "Laser On"
-            color = "green"
+            color = THERMAL_VIEW_CONTROL_LASER_ON
         else:
             topic = "avr/pcm/set_laser_off"
             payload = AvrPcmSetLaserOffPayload()
             text = "Laser Off"
-            color = "red"
+            color = THERMAL_VIEW_CONTROL_LASER_OFF
 
         self.send_message(topic, payload)
         self.laser_toggle_label.setText(wrap_text(text, color))

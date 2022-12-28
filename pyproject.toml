@@ -17,6 +17,8 @@
     paho-mqtt          = "^1.6.1"
     bell-avr-libraries = { extras = ["mqtt", "serial"], version = "^0.1.12" }
     pyinstaller        = "^5.7.0"
+    darkdetect         = "^0.8.0"
+    typeguard          = "^2.13.3"
 
 [tool.poetry.group.dev.dependencies]
     pre-commit = "^2.21.0"
