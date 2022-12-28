@@ -14,6 +14,12 @@ from bell.avr.mqtt.payloads import (
 from PySide6 import QtCore, QtWidgets
 
 from ..lib.color import smear_color, wrap_text
+from ..lib.custom_colors import (
+    VMC_TELEMETRY_ARMED_COLOR,
+    VMC_TELEMETRY_BATTERY_MAX_COLOR,
+    VMC_TELEMETRY_BATTERY_MIN_COLOR,
+    VMC_TELEMETRY_DISARMED_COLOR,
+)
 from ..lib.widgets import DisplayLineEdit, StatusLabel
 from .base import BaseTabWidget
 
@@ -239,7 +245,11 @@ class VMCTelemetryWidget(BaseTabWidget):
 
         # this is required to change the progress bar color as the value changes
         color = smear_color(
-            (135, 0, 16), (11, 135, 0), value=soc, min_value=0, max_value=100
+            VMC_TELEMETRY_BATTERY_MIN_COLOR,
+            VMC_TELEMETRY_BATTERY_MAX_COLOR,
+            value=soc,
+            min_value=0,
+            max_value=100,
         )
 
         stylesheet = f"""
@@ -250,7 +260,7 @@ class VMCTelemetryWidget(BaseTabWidget):
             }}
 
             QProgressBar::chunk {{
-                background-color: rgb{color};
+                background-color: {color.hex};
             }}
             """
 
@@ -261,10 +271,10 @@ class VMCTelemetryWidget(BaseTabWidget):
         Update status information
         """
         if payload["armed"]:
-            color = "Red"
+            color = VMC_TELEMETRY_ARMED_COLOR
             text = "Armed (and dangerous)"
         else:
-            color = "DarkGoldenRod"
+            color = VMC_TELEMETRY_DISARMED_COLOR
             text = "Disarmed"
 
         self.armed_label.setText(wrap_text(text, color))

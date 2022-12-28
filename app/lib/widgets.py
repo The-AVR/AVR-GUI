@@ -4,19 +4,34 @@ from typing import Optional
 
 from PySide6 import QtGui, QtWidgets
 
+from .custom_colors import DISPLAY_LINE_EDIT_BACKGROUND_COLOR
 from .qt_icon import IMG_DIR
 
 
 class IntLineEdit(QtWidgets.QLineEdit):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+        self, *args, min_value: int = 0, max_value: int = 1000000, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self.setValidator(QtGui.QIntValidator(0, 1000000, self))
+
+        self.min_value = min_value
+        self.max_value = max_value
+
+        self.setValidator(QtGui.QIntValidator(self.min_value, self.max_value, self))
 
 
 class DoubleLineEdit(QtWidgets.QLineEdit):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+        self, *args, min_value: float = 0.0, max_value: float = 100.0, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self.setValidator(QtGui.QDoubleValidator(0.0, 100.0, 2, self))
+
+        self.min_value = min_value
+        self.max_value = max_value
+
+        self.setValidator(
+            QtGui.QDoubleValidator(self.min_value, self.max_value, 2, self)
+        )
 
 
 class DisplayLineEdit(QtWidgets.QLineEdit):
@@ -26,7 +41,9 @@ class DisplayLineEdit(QtWidgets.QLineEdit):
         self.round_digits = round_digits
 
         self.setReadOnly(True)
-        self.setStyleSheet("background-color: rgb(220, 220, 220)")
+        self.setStyleSheet(
+            f"background-color: {DISPLAY_LINE_EDIT_BACKGROUND_COLOR.hex}"
+        )
         self.setMaximumWidth(100)
 
     def setText(self, arg__1: str) -> None:

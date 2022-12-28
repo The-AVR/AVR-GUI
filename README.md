@@ -36,6 +36,12 @@ poetry shell
 
 to activate the virtual environment.
 
+To start the GUI, launch the `app.py` file:
+
+```bash
+python app.py
+```
+
 ## Usage
 
 Open the application. You'll be brought to the Connections tab.

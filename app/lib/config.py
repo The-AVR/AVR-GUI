@@ -1,7 +1,10 @@
+import contextlib
 import json
 import os
 import sys
-from typing import Any
+from typing import Any, Literal
+
+import typeguard
 
 if getattr(sys, "frozen", False):
     DATA_DIR = sys._MEIPASS  # type: ignore
@@ -37,10 +40,19 @@ class _Config:
         with open(self.config_file, "w") as fp:
             json.dump(data, fp, indent=4)
 
-    def __get(self, key: str, default: Any = None) -> Any:
+    def __get(self, key: str, type_hint: Any, default: Any) -> Any:
+        # read the file
         data = self.__read()
+
+        # if the requested key is in the config, return it
         if key in data:
-            return data[key]
+            value = data[key]
+
+            with contextlib.suppress(TypeError):
+                # make sure the value is of the correct type
+                # otherwise, return the default
+                typeguard.check_type(key, value, type_hint)
+                return value
 
         # if we have a set default value that is not None, write it out
         if default is not None:
@@ -55,7 +67,7 @@ class _Config:
 
     @property
     def mqtt_host(self) -> str:
-        return self.__get("mqtt_host", "")
+        return self.__get("mqtt_host", str, "")
 
     @mqtt_host.setter
     def mqtt_host(self, value: str) -> None:
@@ -63,7 +75,7 @@ class _Config:
 
     @property
     def mqtt_port(self) -> int:
-        return self.__get("mqtt_port", 18830)
+        return self.__get("mqtt_port", int, 18830)
 
     @mqtt_port.setter
     def mqtt_port(self, value: int) -> None:
@@ -71,7 +83,7 @@ class _Config:
 
     @property
     def serial_port(self) -> str:
-        return self.__get("serial_port", "")
+        return self.__get("serial_port", str, "")
 
     @serial_port.setter
     def serial_port(self, value: str) -> None:
@@ -79,7 +91,7 @@ class _Config:
 
     @property
     def serial_baud_rate(self) -> int:
-        return self.__get("serial_baud_rate", 115200)
+        return self.__get("serial_baud_rate", int, 115200)
 
     @serial_baud_rate.setter
     def serial_baud_rate(self, value: int) -> None:
@@ -87,7 +99,7 @@ class _Config:
 
     @property
     def mavlink_host(self) -> str:
-        return self.__get("mavlink_host", "")
+        return self.__get("mavlink_host", str, "")
 
     @mavlink_host.setter
     def mavlink_host(self, value: str) -> None:
@@ -95,7 +107,7 @@ class _Config:
 
     @property
     def mavlink_port(self) -> int:
-        return self.__get("mavlink_port", 5670)
+        return self.__get("mavlink_port", int, 5670)
 
     @mavlink_port.setter
     def mavlink_port(self, value: int) -> None:
@@ -103,7 +115,7 @@ class _Config:
 
     @property
     def log_file_directory(self) -> str:
-        return self.__get("log_file_directory", os.path.join(ROOT_DIR, "logs"))
+        return self.__get("log_file_directory", str, os.path.join(ROOT_DIR, "logs"))
 
     @log_file_directory.setter
     def log_file_directory(self, value: str) -> None:
@@ -111,11 +123,19 @@ class _Config:
 
     @property
     def joystick_inverted(self) -> bool:
-        return self.__get("joystick_inverted", False)
+        return self.__get("joystick_inverted", bool, False)
 
     @joystick_inverted.setter
     def joystick_inverted(self, value: bool) -> None:
         return self.__set("joystick_inverted", value)
+
+    @property
+    def force_color_mode(self) -> Literal["dark", "light", None]:
+        return self.__get("force_color_mode", Literal["dark", "light", None], None)
+
+    @force_color_mode.setter
+    def force_color_mode(self, value: Literal["dark", "light", None]) -> None:
+        return self.__set("force_color_mode", value)
 
 
 config = _Config()
