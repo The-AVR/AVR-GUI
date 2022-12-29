@@ -1,27 +1,14 @@
 import contextlib
 import json
 import os
-import sys
 from typing import Any, Literal
 
 import typeguard
 
-if getattr(sys, "frozen", False):
-    DATA_DIR = sys._MEIPASS  # type: ignore
-    ROOT_DIR = os.path.dirname(sys.executable)
-else:
-    DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..")
-    ROOT_DIR = DATA_DIR
-
-# root dir is the directory of the main entrypoint
-ROOT_DIR = os.path.abspath(ROOT_DIR)
-# data dir is the root directory within the application itself
-DATA_DIR = os.path.abspath(DATA_DIR)
-# directory that contains images
-IMG_DIR = os.path.join(DATA_DIR, "assets", "img")
+from app.lib.directory_config import ROOT_DIR
 
 
-class _Config:
+class _UserConfig:
     config_file = os.path.join(ROOT_DIR, "settings.json")
 
     def __read(self) -> dict:
@@ -29,9 +16,16 @@ class _Config:
             return {}
 
         try:
-            with open(self.config_file) as fp:
-                return json.load(fp)
-        except json.JSONDecodeError:
+            with open(self.config_file, "r") as fp:
+                data = json.load(fp)
+
+            # if we got valid JSON, but it's not a dict, still trigger error
+            if not isinstance(data, dict):
+                raise ValueError
+
+            return data
+
+        except (json.JSONDecodeError, ValueError):
             # on invalid files, just delete it
             os.remove(self.config_file)
             return {}
@@ -138,4 +132,4 @@ class _Config:
         return self.__set("force_color_mode", value)
 
 
-config = _Config()
+UserConfig = _UserConfig()

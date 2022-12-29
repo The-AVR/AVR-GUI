@@ -3,7 +3,7 @@ from typing import Tuple
 
 from colour import Color as Color_
 
-from .calc import normalize_value
+from app.lib.calc import normalize_value
 
 
 class Color(Color_):
@@ -28,7 +28,7 @@ def smear_color(
     Smear a color between two colors based on a value.
     """
     norm_value = normalize_value(value, min_value, max_value)
-    diff = [f - e for f, e in zip(max_color.rgb, min_color.rgb_)]
+    diff = [f - e for f, e in zip(max_color.rgb, min_color.rgb)]
     smear = [d * norm_value for d in diff]
     return Color(rgb=[e + s for e, s in zip(min_color.rgb, smear)])
 

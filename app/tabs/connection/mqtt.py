@@ -4,11 +4,11 @@ import paho.mqtt.client as mqtt
 from loguru import logger
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ...lib.color import wrap_text
-from ...lib.config import config
-from ...lib.custom_colors import CONNECTION_STATE_COLOR_LOOKUP
-from ...lib.enums import ConnectionState
-from ...lib.widgets import IntLineEdit
+from app.lib.color import wrap_text
+from app.lib.color_config import CONNECTION_STATE_COLOR_LOOKUP
+from app.lib.enums import ConnectionState
+from app.lib.user_config import UserConfig
+from app.lib.widgets import IntLineEdit
 
 
 class MQTTClient(QtCore.QObject):
@@ -81,8 +81,8 @@ class MQTTClient(QtCore.QObject):
             self.client.loop_start()
 
             # save settings
-            config.mqtt_host = host
-            config.mqtt_port = port
+            UserConfig.mqtt_host = host
+            UserConfig.mqtt_port = port
 
             # emit success
             logger.success("Connected to MQTT server")
@@ -162,8 +162,8 @@ class MQTTConnectionWidget(QtWidgets.QWidget):
         # set starting state
         self.set_connected_state(ConnectionState.disconnected)
 
-        self.hostname_line_edit.setText(config.mqtt_host)
-        self.port_line_edit.setText(str(config.mqtt_port))
+        self.hostname_line_edit.setText(UserConfig.mqtt_host)
+        self.port_line_edit.setText(str(UserConfig.mqtt_port))
 
         # set up connections
         self.hostname_line_edit.returnPressed.connect(self.connect_button.click)  # type: ignore

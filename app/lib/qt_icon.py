@@ -2,7 +2,7 @@ import os
 
 from PySide6 import QtGui, QtWidgets
 
-from .config import IMG_DIR
+from app.lib.directory_config import IMG_DIR
 
 
 def set_icon(widget: QtWidgets.QWidget) -> None:

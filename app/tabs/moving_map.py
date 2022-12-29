@@ -9,16 +9,16 @@ from bell.avr.mqtt.payloads import (
 )
 from PySide6 import QtCore, QtGui, QtSvgWidgets, QtWidgets
 
-from ..lib.calc import constrain, normalize_value
-from ..lib.color import smear_color
-from ..lib.config import IMG_DIR
-from ..lib.custom_colors import (
+from app.lib.calc import constrain, normalize_value
+from app.lib.color import smear_color
+from app.lib.color_config import (
     BLACK_COLOR,
     MOVING_MAP_ALTITUDE_MAX_COLOR,
     MOVING_MAP_ALTITUDE_MIN_COLOR,
     MOVING_MAP_GROUND_COLOR,
 )
-from .base import BaseTabWidget
+from app.lib.directory_config import IMG_DIR
+from app.tabs.base import BaseTabWidget
 
 
 class ResizedQGraphicsSvgItem(QtSvgWidgets.QGraphicsSvgItem):

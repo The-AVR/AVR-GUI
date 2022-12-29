@@ -9,8 +9,8 @@ from bell.avr.mqtt.payloads import (
 )
 from PySide6 import QtCore, QtWidgets
 
-from ..lib.color import wrap_text
-from ..lib.custom_colors import (
+from app.lib.color import wrap_text
+from app.lib.color_config import (
     BLACK_COLOR,
     BLUE_COLOR,
     GREEN_COLOR,
@@ -19,7 +19,7 @@ from ..lib.custom_colors import (
     VMC_CONTROL_SERVO_OPEN_COLOR,
     WHITE_COLOR,
 )
-from .base import BaseTabWidget
+from app.tabs.base import BaseTabWidget
 
 
 class VMCControlWidget(BaseTabWidget):

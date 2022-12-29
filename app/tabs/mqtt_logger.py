@@ -8,8 +8,8 @@ from typing import Optional
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ..lib.config import config
-from .base import BaseTabWidget
+from app.lib.user_config import UserConfig
+from app.tabs.base import BaseTabWidget
 
 
 class LogFileViewWidget(QtWidgets.QTreeView):
@@ -21,12 +21,12 @@ class LogFileViewWidget(QtWidgets.QTreeView):
         os.environ["QT_FILESYSTEMMODEL_WATCH_FILES"] = "True"
 
         self.filesystem_model = QtWidgets.QFileSystemModel()
-        self.filesystem_model.setRootPath(config.log_file_directory)
+        self.filesystem_model.setRootPath(UserConfig.log_file_directory)
         self.filesystem_model.setNameFilters(["*.csv"])
         self.filesystem_model.setNameFilterDisables(False)
 
         self.setModel(self.filesystem_model)
-        self.setRootIndex(self.filesystem_model.index(config.log_file_directory))
+        self.setRootIndex(self.filesystem_model.index(UserConfig.log_file_directory))
 
         # dont allow nested folders to be expanded
         self.setItemsExpandable(False)
@@ -63,7 +63,7 @@ class MQTTLoggerWidget(BaseTabWidget):
         self.setWindowTitle("MQTT Logger")
 
         # Access the Filesystem
-        os.makedirs(config.log_file_directory, exist_ok=True)
+        os.makedirs(UserConfig.log_file_directory, exist_ok=True)
 
         # stop/start state
         self.recording = False
@@ -79,7 +79,7 @@ class MQTTLoggerWidget(BaseTabWidget):
         layout = QtWidgets.QVBoxLayout(self)
         self.setLayout(layout)
 
-        self.directory_label = QtWidgets.QLabel(config.log_file_directory)
+        self.directory_label = QtWidgets.QLabel(UserConfig.log_file_directory)
         layout.addWidget(self.directory_label)
 
         self.file_tree = LogFileViewWidget(self)
@@ -111,7 +111,7 @@ class MQTTLoggerWidget(BaseTabWidget):
         if self.recording:
             # generate new file name
             filename = os.path.join(
-                config.log_file_directory,
+                UserConfig.log_file_directory,
                 f"MQTTLog_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
             )
 

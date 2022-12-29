@@ -1,8 +1,8 @@
 from PySide6 import QtWidgets
 
-from ..base import BaseTabWidget
-from .mqtt import MQTTConnectionWidget
-from .serial import SerialConnectionWidget
+from app.tabs.base import BaseTabWidget
+from app.tabs.connection.mqtt import MQTTConnectionWidget
+from app.tabs.connection.serial import SerialConnectionWidget
 
 
 class MainConnectionWidget(BaseTabWidget):
