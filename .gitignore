@@ -160,6 +160,8 @@ cython_debug/
 #.idea/
 
 node_modules/
+requirements.txt
 settings.json
 logs/
 !app/lib/
+pytest.xml
