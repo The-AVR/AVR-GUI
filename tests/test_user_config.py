@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 from typing import Any, Generator
 
 import pytest
@@ -31,9 +33,10 @@ def config_file() -> Generator:
     """
     Pytest fixture to wipe config file contents before and after each test.
     """
-    set_config_file_contents({})
-    yield
-    set_config_file_contents({})
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_file = os.path.join(temp_dir, "settings.json")
+        UserConfig.config_file = temp_file
+        yield
 
 
 def test_corrupt_config_file_contents(config_file: None) -> None:
