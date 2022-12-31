@@ -92,22 +92,6 @@ class _UserConfig:
         return self.__set("serial_baud_rate", value)
 
     @property
-    def mavlink_host(self) -> str:
-        return self.__get("mavlink_host", str, "")
-
-    @mavlink_host.setter
-    def mavlink_host(self, value: str) -> None:
-        return self.__set("mavlink_host", value)
-
-    @property
-    def mavlink_port(self) -> int:
-        return self.__get("mavlink_port", int, 5670)
-
-    @mavlink_port.setter
-    def mavlink_port(self, value: int) -> None:
-        return self.__set("mavlink_port", value)
-
-    @property
     def log_file_directory(self) -> str:
         return self.__get("log_file_directory", str, os.path.join(ROOT_DIR, "logs"))
 

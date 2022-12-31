@@ -1,11 +1,11 @@
 from typing import Tuple
 
-from colour import Color as Color_
+from colour import Color as _Color
 
 from app.lib.calc import normalize_value
 
 
-class Color(Color_):
+class Color(_Color):
     """
     Small tweak to the normal `colour` library, to include a property to get the
     `Color` object's RGB values in a 0-255 range.
