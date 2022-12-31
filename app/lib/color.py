@@ -1,4 +1,3 @@
-import math
 from typing import Tuple
 
 from colour import Color as Color_
@@ -14,7 +13,7 @@ class Color(Color_):
 
     @property
     def rgb_255(self) -> Tuple[int, int, int]:
-        return tuple(math.floor(i * 255) for i in self.rgb)
+        return tuple(round(i * 255) for i in self.rgb)
 
 
 def smear_color(
