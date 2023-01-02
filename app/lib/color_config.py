@@ -2,14 +2,14 @@ import os
 
 import darkdetect
 
-from .color import Color
-from .config import config
-from .enums import ConnectionState
+from app.lib.color import Color
+from app.lib.enums import ConnectionState
+from app.lib.user_config import UserConfig
 
-if config.force_color_mode == "light":
+if UserConfig.force_color_mode == "light":
     # user has forced light mode
     IS_DARK = False
-elif config.force_color_mode == "dark":
+elif UserConfig.force_color_mode == "dark":
     # user has forced dark mode
     IS_DARK = True
 else:

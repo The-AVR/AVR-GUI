@@ -16,17 +16,17 @@ from bell.avr.mqtt.payloads import (
 from bell.avr.utils.timing import rate_limit
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ..lib.calc import constrain, map_value
-from ..lib.color import wrap_text
-from ..lib.config import config
-from ..lib.custom_colors import (
+from app.lib.calc import constrain, map_value
+from app.lib.color import wrap_text
+from app.lib.color_config import (
     THERMAL_VIEW_CONTROL_LASER_OFF,
     THERMAL_VIEW_CONTROL_LASER_ON,
     THERMAL_VIEW_CONTROL_MAX_COLOR,
     THERMAL_VIEW_CONTROL_MIN_COLOR,
 )
-from ..lib.widgets import DoubleLineEdit
-from .base import BaseTabWidget
+from app.lib.user_config import UserConfig
+from app.lib.widgets import DoubleLineEdit
+from app.tabs.base import BaseTabWidget
 
 
 class Direction(Enum):
@@ -310,7 +310,7 @@ class JoystickWidget(BaseTabWidget):
             self.update()
 
         moving_offset_y = self.moving_offset.y()
-        if not config.joystick_inverted:
+        if not UserConfig.joystick_inverted:
             moving_offset_y = self.height() - moving_offset_y
 
         # print(self.joystick_direction())
@@ -413,7 +413,7 @@ class ThermalViewControlWidget(BaseTabWidget):
         # https://i.imgur.com/yvgNiFE.jpg
         self.joystick_inverted_checkbox = QtWidgets.QCheckBox("Invert Joystick")
         joystick_layout.addWidget(self.joystick_inverted_checkbox)
-        self.joystick_inverted_checkbox.setChecked(config.joystick_inverted)
+        self.joystick_inverted_checkbox.setChecked(UserConfig.joystick_inverted)
 
         layout_splitter.addWidget(joystick_groupbox)
         layout.addWidget(layout_splitter)
@@ -437,7 +437,7 @@ class ThermalViewControlWidget(BaseTabWidget):
         """
         Callback when joystick inverted checkbox is clicked
         """
-        config.joystick_inverted = self.joystick_inverted_checkbox.isChecked()
+        UserConfig.joystick_inverted = self.joystick_inverted_checkbox.isChecked()
 
     def set_laser(self, state: bool) -> None:
         if state:

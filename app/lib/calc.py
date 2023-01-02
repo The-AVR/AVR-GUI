@@ -7,7 +7,7 @@ def constrain(value: float, min_value: float, max_value: float) -> float:
 
 def normalize_value(value: float, min_value: float, max_value: float) -> float:
     """
-    Bound and normalize a value within a given range
+    Bound and normalize a value within a given range.
     """
     value = constrain(value, min_value, max_value)
 
@@ -17,6 +17,12 @@ def normalize_value(value: float, min_value: float, max_value: float) -> float:
 
 
 def map_value(
-    x: float, in_min: float, in_max: float, out_min: float, out_max: float
+    value: float, in_min: float, in_max: float, out_min: float, out_max: float
 ) -> float:
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+    """
+    Take an input value within a given range and map it to a new range.
+    If the input value is outside the input range, then it will be constrained to that
+    range.
+    """
+    input_norm = normalize_value(value, in_min, in_max)
+    return out_min + ((out_max - out_min) * input_norm)

@@ -6,11 +6,11 @@ from bell.avr.serial.ports import list_serial_ports
 from loguru import logger
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ...lib.color import wrap_text
-from ...lib.config import config
-from ...lib.custom_colors import CONNECTION_STATE_COLOR_LOOKUP
-from ...lib.enums import ConnectionState
-from ...lib.widgets import IntLineEdit
+from app.lib.color import wrap_text
+from app.lib.color_config import CONNECTION_STATE_COLOR_LOOKUP
+from app.lib.enums import ConnectionState
+from app.lib.user_config import UserConfig
+from app.lib.widgets import IntLineEdit
 
 
 class SerialClient(QtCore.QObject):
@@ -56,8 +56,8 @@ class SerialClient(QtCore.QObject):
             self.read_loop_thread.start()
 
             # save settings
-            config.serial_port = port
-            config.serial_baud_rate = baud_rate
+            UserConfig.serial_port = port
+            UserConfig.serial_baud_rate = baud_rate
 
             logger.success("Connected to serial port")
             self.connection_state.emit(ConnectionState.connected)
@@ -131,9 +131,9 @@ class SerialConnectionWidget(QtWidgets.QWidget):
 
         self.com_port_combo.addItems(serial_ports)
         self.com_port_combo.setCurrentIndex(
-            self.com_port_combo.findText(config.serial_port)
+            self.com_port_combo.findText(UserConfig.serial_port)
         )
-        self.baud_rate_line_edit.setText(str(config.serial_baud_rate))
+        self.baud_rate_line_edit.setText(str(UserConfig.serial_baud_rate))
 
         # set up connections
         self.connect_button.clicked.connect(  # type: ignore

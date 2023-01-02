@@ -1,0 +1,14 @@
+name: Python Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  tests:
+    uses: bellflight/github-actions/.github/workflows/avr_python_tests.yml@main
+    with:
+      coverage_directory: app/

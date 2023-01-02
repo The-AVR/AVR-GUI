@@ -13,15 +13,15 @@ from bell.avr.mqtt.payloads import (
 )
 from PySide6 import QtCore, QtWidgets
 
-from ..lib.color import smear_color, wrap_text
-from ..lib.custom_colors import (
+from app.lib.color import smear_color, wrap_text
+from app.lib.color_config import (
     VMC_TELEMETRY_ARMED_COLOR,
     VMC_TELEMETRY_BATTERY_MAX_COLOR,
     VMC_TELEMETRY_BATTERY_MIN_COLOR,
     VMC_TELEMETRY_DISARMED_COLOR,
 )
-from ..lib.widgets import DisplayLineEdit, StatusLabel
-from .base import BaseTabWidget
+from app.lib.widgets import DisplayLineEdit, StatusLabel
+from app.tabs.base import BaseTabWidget
 
 
 class VMCTelemetryWidget(BaseTabWidget):
