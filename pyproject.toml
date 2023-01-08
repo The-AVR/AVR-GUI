@@ -30,15 +30,5 @@
     venvPath         = "."
     venv             = ".venv"
 
-[tool.isort]
-    profile = "black"
-
-[tool.autoflake]
-    recursive = true
-
-[tool.flake8]
-    exclude = ".venv"
-    # E501 is line too long
-    # E203 is whitespace before ':'
-    # W503 is line break before binary operator
-    ignore = "E501, E203, W503"
+[tool.ruff]
+    ignore = ["E501"]
