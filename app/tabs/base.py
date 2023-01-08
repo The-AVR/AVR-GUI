@@ -5,7 +5,7 @@ from typing import Any
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ..lib.qt_icon import set_icon
+from app.lib.qt_icon import set_icon
 
 
 class BaseTabWidget(QtWidgets.QWidget):

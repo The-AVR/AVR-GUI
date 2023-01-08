@@ -4,8 +4,8 @@ from typing import Optional
 
 from PySide6 import QtGui, QtWidgets
 
-from .custom_colors import DISPLAY_LINE_EDIT_BACKGROUND_COLOR
-from .qt_icon import IMG_DIR
+from app.lib.color_config import DISPLAY_LINE_EDIT_BACKGROUND_COLOR
+from app.lib.directory_config import IMG_DIR
 
 
 class IntLineEdit(QtWidgets.QLineEdit):

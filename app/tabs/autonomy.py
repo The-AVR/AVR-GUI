@@ -9,14 +9,14 @@ from bell.avr.mqtt.payloads import (
 )
 from PySide6 import QtCore, QtWidgets
 
-from ..lib.color import wrap_text
-from ..lib.custom_colors import (
+from app.lib.color import wrap_text
+from app.lib.color_config import (
     AUTONOMY_AUTONOMOUS_DISABLED_COLOR,
     AUTONOMY_AUTONOMOUS_ENABLED_COLOR,
     AUTONOMY_DROP_DISABLED_COLOR,
     AUTONOMY_DROP_ENABLED_COLOR,
 )
-from .base import BaseTabWidget
+from app.tabs.base import BaseTabWidget
 
 
 class AutonomyWidget(BaseTabWidget):

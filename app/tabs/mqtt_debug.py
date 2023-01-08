@@ -7,11 +7,11 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from bell.avr.mqtt.constants import MQTTTopicPayload, MQTTTopics
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from ..lib.custom_colors import (
+from app.lib.color_config import (
     MQTT_DEBUGGER_DATA_VIEW_BACKGROUND_COLOR,
     MQTT_DEBUGGER_TOPIC_FLASH_COLOR,
 )
-from .base import BaseTabWidget
+from app.tabs.base import BaseTabWidget
 
 
 def _get_or_create_child(
