@@ -199,7 +199,6 @@ class AttitudeIndicator(QtWidgets.QGraphicsView):
 
 
 class DroneAltitudeWidget(QtWidgets.QWidget):
-
     GROUND_WIDTH = 3
 
     DRONE_ICON_WIDTH = 80
