@@ -10,7 +10,7 @@
 [tool.poetry.dependencies]
     python             = ">=3.9,<3.12"
     numpy              = "^1.23.5"
-    scipy              = "^1.9.3"
+    scipy              = "^1.10.0"
     colour             = "^0.1.5"
     loguru             = "^0.6.0"
     pyside6-essentials = "^6.4.2"
