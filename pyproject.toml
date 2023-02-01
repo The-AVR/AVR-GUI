@@ -13,7 +13,7 @@
     scipy              = "^1.9.3"
     colour             = "^0.1.5"
     loguru             = "^0.6.0"
-    pyside6-essentials = "^6.4.1"
+    pyside6-essentials = "^6.4.2"
     paho-mqtt          = "^1.6.1"
     bell-avr-libraries = { extras = ["mqtt", "serial"], version = "^0.1.12" }
     pyinstaller        = "^5.7.0"
