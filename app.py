@@ -144,8 +144,8 @@ class MainWindow(QtWidgets.QWidget):
             self.vmc_telemetry_widget, self.vmc_telemetry_widget.windowTitle()
         )
 
-        self.main_connection_widget.mqtt_connection_widget.mqtt_client.message.connect(
-            self.vmc_telemetry_widget.process_message
+        self.main_connection_widget.mqtt_connection_widget.mqtt_client.on_message_signal.connect(
+            self.vmc_telemetry_widget.on_message
         )
 
         # moving map widget
@@ -155,8 +155,8 @@ class MainWindow(QtWidgets.QWidget):
         self.moving_map_widget.pop_in.connect(self.tabs.pop_in)
         self.tabs.addTab(self.moving_map_widget, self.moving_map_widget.windowTitle())
 
-        self.main_connection_widget.mqtt_connection_widget.mqtt_client.message.connect(
-            self.moving_map_widget.process_message
+        self.main_connection_widget.mqtt_connection_widget.mqtt_client.on_message_signal.connect(
+            self.moving_map_widget.on_message
         )
 
         # vmc control widget
@@ -166,8 +166,8 @@ class MainWindow(QtWidgets.QWidget):
         self.vmc_control_widget.pop_in.connect(self.tabs.pop_in)
         self.tabs.addTab(self.vmc_control_widget, self.vmc_control_widget.windowTitle())
 
-        self.vmc_control_widget.emit_message.connect(
-            self.main_connection_widget.mqtt_connection_widget.mqtt_client.publish
+        self.vmc_control_widget.send_message_signal.connect(
+            self.main_connection_widget.mqtt_connection_widget.mqtt_client._publish
         )
 
         # thermal view widget
@@ -180,12 +180,12 @@ class MainWindow(QtWidgets.QWidget):
             self.thermal_view_control_widget.windowTitle(),
         )
 
-        self.main_connection_widget.mqtt_connection_widget.mqtt_client.message.connect(
-            self.thermal_view_control_widget.process_message
+        self.main_connection_widget.mqtt_connection_widget.mqtt_client.on_message_signal.connect(
+            self.thermal_view_control_widget.on_message
         )
 
-        self.thermal_view_control_widget.emit_message.connect(
-            self.main_connection_widget.mqtt_connection_widget.mqtt_client.publish
+        self.thermal_view_control_widget.send_message_signal.connect(
+            self.main_connection_widget.mqtt_connection_widget.mqtt_client._publish
         )
 
         # autonomy widget
@@ -195,8 +195,8 @@ class MainWindow(QtWidgets.QWidget):
         self.autonomy_widget.pop_in.connect(self.tabs.pop_in)
         self.tabs.addTab(self.autonomy_widget, self.autonomy_widget.windowTitle())
 
-        self.autonomy_widget.emit_message.connect(
-            self.main_connection_widget.mqtt_connection_widget.mqtt_client.publish
+        self.autonomy_widget.send_message_signal.connect(
+            self.main_connection_widget.mqtt_connection_widget.mqtt_client._publish
         )
 
         # mqtt debug widget
@@ -206,11 +206,11 @@ class MainWindow(QtWidgets.QWidget):
         self.mqtt_debug_widget.pop_in.connect(self.tabs.pop_in)
         self.tabs.addTab(self.mqtt_debug_widget, self.mqtt_debug_widget.windowTitle())
 
-        self.main_connection_widget.mqtt_connection_widget.mqtt_client.message.connect(
-            self.mqtt_debug_widget.process_message
+        self.main_connection_widget.mqtt_connection_widget.mqtt_client.on_message_signal.connect(
+            self.mqtt_debug_widget.on_message
         )
-        self.mqtt_debug_widget.emit_message.connect(
-            self.main_connection_widget.mqtt_connection_widget.mqtt_client.publish
+        self.mqtt_debug_widget.send_message_signal.connect(
+            self.main_connection_widget.mqtt_connection_widget.mqtt_client._publish
         )
 
         # mqtt logger widget
@@ -220,8 +220,8 @@ class MainWindow(QtWidgets.QWidget):
         self.mqtt_logger_widget.pop_in.connect(self.tabs.pop_in)
         self.tabs.addTab(self.mqtt_logger_widget, self.mqtt_logger_widget.windowTitle())
 
-        self.main_connection_widget.mqtt_connection_widget.mqtt_client.message.connect(
-            self.mqtt_logger_widget.process_message
+        self.main_connection_widget.mqtt_connection_widget.mqtt_client.on_message_signal.connect(
+            self.mqtt_logger_widget.on_message
         )
 
         # pcc tester widget
@@ -285,10 +285,10 @@ class MainWindow(QtWidgets.QWidget):
         Override close event to close all connections.
         """
         if self.mqtt_connected:
-            self.main_connection_widget.mqtt_connection_widget.mqtt_client.logout()
+            self.main_connection_widget.mqtt_connection_widget.mqtt_client.stop()
 
         if self.serial_connected:
-            self.main_connection_widget.serial_connection_widget.serial_client.logout()
+            self.main_connection_widget.serial_connection_widget.serial_client.stop()
 
         event.accept()
 

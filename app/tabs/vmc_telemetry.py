@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-import json
-from typing import Dict
+from typing import Any, Dict
 
 from bell.avr.mqtt.payloads import (
-    AvrFcmAttitudeEulerPayload,
-    AvrFcmBatteryPayload,
-    AvrFcmGpsInfoPayload,
-    AvrFcmLocationGlobalPayload,
-    AvrFcmLocationLocalPayload,
-    AvrFcmStatusPayload,
+    AVRFCMArmed,
+    AVRFCMAttitudeEulerDegrees,
+    AVRFCMBattery,
+    AVRFCMFlightMode,
+    AVRFCMGPSInfo,
+    AVRFCMPositionGlobal,
+    AVRFCMPositionLocal,
 )
 from PySide6 import QtCore, QtWidgets
 
+from app.lib.calc import constrain
 from app.lib.color import smear_color, wrap_text
 from app.lib.color_config import (
     VMC_TELEMETRY_ARMED_COLOR,
@@ -33,6 +34,16 @@ class VMCTelemetryWidget(BaseTabWidget):
         super().__init__(parent)
 
         self.setWindowTitle("VMC Telemetry")
+
+        self.topic_callbacks = {
+            "avr/fcm/gps/info": self.update_gps_info,
+            "avr/fcm/battery": self.update_battery,
+            "avr/fcm/flight_mode": self.update_flight_mode,
+            "avr/fcm/armed": self.update_armed,
+            "avr/fcm/position/local": self.update_local_location,
+            "avr/fcm/position/global": self.update_global_location,
+            "avr/fcm/attitude/euler/degrees": self.update_euler_attitude,
+        }
 
     def build(self) -> None:
         """
@@ -222,26 +233,23 @@ class VMCTelemetryWidget(BaseTabWidget):
         self.att_p_line_edit.setText("")
         self.att_y_line_edit.setText("")
 
-    def update_satellites(self, payload: AvrFcmGpsInfoPayload) -> None:
+    def update_gps_info(self, payload: AVRFCMGPSInfo) -> None:
         """
-        Update satellites information
+        Update GPS information
         """
         self.satellites_label.setText(
-            f"{payload['num_satellites']} visible, {payload['fix_type']}"
+            f"{payload.visible_satellites} visible, {payload.fix_type}"
         )
 
-    def update_battery(self, payload: AvrFcmBatteryPayload) -> None:
+    def update_battery(self, payload: AVRFCMBattery) -> None:
         """
         Update battery information
         """
-        soc = payload["soc"]
-        # prevent it from dropping below 0
-        soc = max(soc, 0)
-        # prevent it from going above 100
-        soc = min(soc, 100)
+        soc = payload.state_of_charge
+        soc = constrain(soc, 0, 100)
 
         self.battery_percent_bar.setValue(int(soc))
-        self.battery_voltage_label.setText(f"{round(payload['voltage'], 4)} Volts")
+        self.battery_voltage_label.setText(f"{round(payload.voltage, 4)} Volts")
 
         # this is required to change the progress bar color as the value changes
         color = smear_color(
@@ -266,11 +274,17 @@ class VMCTelemetryWidget(BaseTabWidget):
 
         self.battery_percent_bar.setStyleSheet(stylesheet)
 
-    def update_status(self, payload: AvrFcmStatusPayload) -> None:
+    def update_flight_mode(self, payload: AVRFCMFlightMode) -> None:
         """
-        Update status information
+        Update flight mode information
         """
-        if payload["armed"]:
+        self.flight_mode_label.setText(payload.flight_mode)
+
+    def update_armed(self, payload: AVRFCMArmed) -> None:
+        """
+        Update armed information
+        """
+        if payload.armed:
             color = VMC_TELEMETRY_ARMED_COLOR
             text = "Armed (and dangerous)"
         else:
@@ -278,31 +292,30 @@ class VMCTelemetryWidget(BaseTabWidget):
             text = "Disarmed"
 
         self.armed_label.setText(wrap_text(text, color))
-        self.flight_mode_label.setText(payload["mode"])
 
-    def update_local_location(self, payload: AvrFcmLocationLocalPayload) -> None:
+    def update_local_location(self, payload: AVRFCMPositionLocal) -> None:
         """
         Update local location information
         """
-        self.loc_x_line_edit.setText(str(payload["dX"]))
-        self.loc_y_line_edit.setText(str(payload["dY"]))
-        self.loc_z_line_edit.setText(str(payload["dZ"]))
+        self.loc_x_line_edit.setText(str(payload.n))
+        self.loc_y_line_edit.setText(str(payload.e))
+        self.loc_z_line_edit.setText(str(payload.d))
 
-    def update_global_location(self, payload: AvrFcmLocationGlobalPayload) -> None:
+    def update_global_location(self, payload: AVRFCMPositionGlobal) -> None:
         """
         Update global location information
         """
-        self.loc_lat_line_edit.setText(str(payload["lat"]))
-        self.loc_lon_line_edit.setText(str(payload["lon"]))
-        self.loc_alt_line_edit.setText(str(payload["alt"]))
+        self.loc_lat_line_edit.setText(str(payload.lat))
+        self.loc_lon_line_edit.setText(str(payload.lon))
+        self.loc_alt_line_edit.setText(str(payload.alt))
 
-    def update_euler_attitude(self, payload: AvrFcmAttitudeEulerPayload) -> None:
+    def update_euler_attitude(self, payload: AVRFCMAttitudeEulerDegrees) -> None:
         """
         Update euler attitude information
         """
-        self.att_r_line_edit.setText(str(payload["roll"]))
-        self.att_p_line_edit.setText(str(payload["pitch"]))
-        self.att_y_line_edit.setText(str(payload["yaw"]))
+        self.att_r_line_edit.setText(str(payload.roll))
+        self.att_p_line_edit.setText(str(payload.pitch))
+        self.att_y_line_edit.setText(str(payload.yaw))
 
     # def update_auaternion_attitude(self, payload: AvrFcmAttitudeQuaternionMessage) -> None:
     #     """
@@ -313,23 +326,8 @@ class VMCTelemetryWidget(BaseTabWidget):
     #     self.att_y_line_edit.setText(str(payload["y"]))
     #     self.att_z_line_edit.setText(str(payload["z"]))
 
-    def process_message(self, topic: str, payload: str) -> None:
-        """
-        Process an incoming message and update the appropriate component
-        """
-        topic_map = {
-            "avr/fcm/gps_info": self.update_satellites,
-            "avr/fcm/battery": self.update_battery,
-            "avr/fcm/status": self.update_status,
-            "avr/fcm/location/local": self.update_local_location,
-            "avr/fcm/location/global": self.update_global_location,
-            "avr/fcm/attitude/euler": self.update_euler_attitude,
-        }
-
-        # discard topics we don't recognize
-        if topic in topic_map:
-            data = json.loads(payload)
-            topic_map[topic](data)
+    def on_message(self, topic: str, payload: Any) -> None:
+        super().on_message(topic, payload)
 
         for status_prefix in self.topic_status_map.keys():
             if not topic.startswith(status_prefix):

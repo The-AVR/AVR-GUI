@@ -4,8 +4,8 @@ import functools
 from typing import List
 
 from bell.avr.mqtt.payloads import (
-    AvrAutonomousBuildingDropPayload,
-    AvrAutonomousEnablePayload,
+    AVRAutonomousBuildingDisable,
+    AVRAutonomousBuildingEnable,
 )
 from PySide6 import QtCore, QtWidgets
 
@@ -39,11 +39,11 @@ class AutonomyWidget(BaseTabWidget):
         autonomous_groupbox.setLayout(autonomous_layout)
 
         autonomous_enable_button = QtWidgets.QPushButton("Enable")
-        autonomous_enable_button.clicked.connect(lambda: self.set_autonomous(True))  # type: ignore
+        autonomous_enable_button.clicked.connect(self.enable_autonomous)  # type: ignore
         autonomous_layout.addWidget(autonomous_enable_button)
 
         autonomous_disable_button = QtWidgets.QPushButton("Disable")
-        autonomous_disable_button.clicked.connect(lambda: self.set_autonomous(False))  # type: ignore
+        autonomous_disable_button.clicked.connect(self.disable_autonomous)  # type: ignore
         autonomous_layout.addWidget(autonomous_disable_button)
 
         self.autonomous_label = QtWidgets.QLabel()
@@ -66,11 +66,11 @@ class AutonomyWidget(BaseTabWidget):
         building_all_layout = QtWidgets.QHBoxLayout()
 
         building_all_enable_button = QtWidgets.QPushButton("Enable All Drops")
-        building_all_enable_button.clicked.connect(lambda: self.set_building_all(True))  # type: ignore
+        building_all_enable_button.clicked.connect(self.enable_building_drop_all)  # type: ignore
         building_all_layout.addWidget(building_all_enable_button)
 
         building_all_disable_button = QtWidgets.QPushButton("Disable All Drops")
-        building_all_disable_button.clicked.connect(lambda: self.set_building_all(False))  # type: ignore
+        building_all_disable_button.clicked.connect(self.disable_building_drop_all)  # type: ignore
         building_all_layout.addWidget(building_all_disable_button)
 
         buildings_layout.addLayout(building_all_layout)
@@ -81,11 +81,11 @@ class AutonomyWidget(BaseTabWidget):
             building_groupbox.setLayout(building_layout)
 
             building_enable_button = QtWidgets.QPushButton("Enable Drop")
-            building_enable_button.clicked.connect(functools.partial(self.set_building, i, True))  # type: ignore
+            building_enable_button.clicked.connect(functools.partial(self.enable_building_drop, i))  # type: ignore
             building_layout.addWidget(building_enable_button)
 
             building_disable_button = QtWidgets.QPushButton("Disable Drop")
-            building_disable_button.clicked.connect(functools.partial(self.set_building, i, False))  # type: ignore
+            building_disable_button.clicked.connect(functools.partial(self.disable_building_drop, i))  # type: ignore
             building_layout.addWidget(building_disable_button)
 
             building_label = QtWidgets.QLabel()
@@ -100,45 +100,62 @@ class AutonomyWidget(BaseTabWidget):
 
         layout.addWidget(buildings_groupbox, 1, 0, 4, 1)
 
-    def set_building(self, number: int, state: bool) -> None:
-        # sourcery skip: assign-if-exp
+    def enable_building_drop(self, number: int) -> None:
         """
-        Set a building state
+        Enable building drop
         """
         self.send_message(
-            "avr/autonomous/building/drop",
-            AvrAutonomousBuildingDropPayload(id=number, enabled=state),
+            "avr/autonomous/building/enable",
+            AVRAutonomousBuildingEnable(building=number),
         )
 
-        if state:
-            text = "Drop Enabled"
-            color = AUTONOMY_DROP_ENABLED_COLOR
-        else:
-            text = "Drop Disabled"
-            color = AUTONOMY_DROP_DISABLED_COLOR
-
+        text = "Drop Enabled"
+        color = AUTONOMY_DROP_ENABLED_COLOR
         self.building_labels[number].setText(wrap_text(text, color))
 
-    def set_building_all(self, state: bool) -> None:
+    def disable_building_drop(self, number: int) -> None:
         """
-        Set all building states at once
-        """
-        for i in range(self.number_of_buildings):
-            self.set_building(i, state)
-
-    def set_autonomous(self, state: bool) -> None:
-        """
-        Set autonomous mode
+        Disable building drop
         """
         self.send_message(
-            "avr/autonomous/enable", AvrAutonomousEnablePayload(enabled=state)
+            "avr/autonomous/building/disable",
+            AVRAutonomousBuildingDisable(building=number),
         )
 
-        if state:
-            text = "Autonomous Enabled"
-            color = AUTONOMY_AUTONOMOUS_ENABLED_COLOR
-        else:
-            text = "Autonomous Disabled"
-            color = AUTONOMY_AUTONOMOUS_DISABLED_COLOR
+        text = "Drop Disabled"
+        color = AUTONOMY_DROP_DISABLED_COLOR
+        self.building_labels[number].setText(wrap_text(text, color))
 
+    def enable_building_drop_all(self) -> None:
+        """
+        Enable all building drops
+        """
+        for i in range(self.number_of_buildings):
+            self.enable_building_drop(i)
+
+    def disable_building_drop_all(self) -> None:
+        """
+        Disable all building drops
+        """
+        for i in range(self.number_of_buildings):
+            self.disable_building_drop(i)
+
+    def enable_autonomous(self) -> None:
+        """
+        Enable autonomous mode
+        """
+        self.send_message("avr/autonomous/enable")
+
+        text = "Autonomous Enabled"
+        color = AUTONOMY_AUTONOMOUS_ENABLED_COLOR
+        self.autonomous_label.setText(wrap_text(text, color))
+
+    def disable_autonomous(self) -> None:
+        """
+        Disable autonomous mode
+        """
+        self.send_message("avr/autonomous/disable")
+
+        text = "Autonomous Disabled"
+        color = AUTONOMY_AUTONOMOUS_DISABLED_COLOR
         self.autonomous_label.setText(wrap_text(text, color))

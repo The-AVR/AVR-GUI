@@ -183,7 +183,7 @@ class PCCTesterWidget(BaseTabWidget):
         green = self.green_led_slider.value()
         blue = self.blue_led_slider.value()
 
-        self.client.set_base_color([0, red, green, blue])
+        self.client.set_base_color((0, red, green, blue))
 
     def update_servos(self) -> None:
         """
