@@ -16,7 +16,7 @@
     pyside6-essentials = "^6.4.2"
     paho-mqtt          = "^1.6.1"
     bell-avr-libraries = { extras = ["mqtt", "serial"], version = "^0.1.12" }
-    pyinstaller        = "^5.7.0"
+    pyinstaller        = "^5.8.0"
     darkdetect         = "^0.8.0"
     typeguard          = "^2.13.3"
 
