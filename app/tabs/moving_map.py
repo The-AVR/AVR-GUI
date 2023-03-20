@@ -1,12 +1,8 @@
-import json
 import math
 import os
 from typing import List, Union
 
-from bell.avr.mqtt.payloads import (
-    AvrFcmAttitudeEulerPayload,
-    AvrFcmLocationLocalPayload,
-)
+from bell.avr.mqtt.payloads import AVRFCMAttitudeEulerDegrees, AVRFCMPositionLocal
 from PySide6 import QtCore, QtGui, QtSvgWidgets, QtWidgets
 
 from app.lib.calc import constrain, normalize_value
@@ -426,9 +422,9 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
         else:
             self.view.enable_panning()
 
-    def update_drone_location(self, x: float, y: float, z: float) -> None:
+    def update_drone_position(self, x: float, y: float, z: float) -> None:
         """
-        Update local location information.
+        Update local position information.
         """
         # drone XYZ is NED
         # Qt however consider top left 0, 0
@@ -517,6 +513,11 @@ class MovingMapWidget(BaseTabWidget):
     def __init__(self, parent: QtWidgets.QWidget) -> None:
         super().__init__(parent)
 
+        self.topic_callbacks = {
+            "avr/fcm/attitude/euler/degrees": self.update_euler_attitude,
+            "avr/fcm/position/local": self.update_position_local,
+        }
+
         self.follow_drone = True
 
         self.setWindowTitle("Moving Map")
@@ -566,38 +567,22 @@ class MovingMapWidget(BaseTabWidget):
             self.follow_drone_button.setText("Follow Drone")
             self.moving_map_widget.follow_drone(False)
 
-    def update_euler_attitude(self, payload: AvrFcmAttitudeEulerPayload) -> None:
+    def update_euler_attitude(self, payload: AVRFCMAttitudeEulerDegrees) -> None:
         """
         Update euler attitude information.
         """
-        self.moving_map_widget.update_drone_attitude(payload["yaw"])
+        self.moving_map_widget.update_drone_attitude(payload.yaw)
 
-        self.attitude_indicator.set_roll(payload["roll"])
-        self.attitude_indicator.set_pitch(payload["pitch"])
+        self.attitude_indicator.set_roll(payload.roll)
+        self.attitude_indicator.set_pitch(payload.pitch)
         self.attitude_indicator.update()
 
-    def update_location_local(self, payload: AvrFcmLocationLocalPayload) -> None:
+    def update_position_local(self, payload: AVRFCMPositionLocal) -> None:
         """
         Update euler attitude information.
         """
-        self.moving_map_widget.update_drone_location(
-            payload["dX"], payload["dY"], payload["dZ"]
-        )
-        self.altitude_indicator.set_altitude(payload["dZ"])
-
-    def process_message(self, topic: str, payload: str) -> None:
-        """
-        Process an incoming message and update the appropriate component
-        """
-        topic_map = {
-            "avr/fcm/location/local": self.update_location_local,
-            "avr/fcm/attitude/euler": self.update_euler_attitude,
-        }
-
-        # discard topics we don't recognize
-        if topic in topic_map:
-            data = json.loads(payload)
-            topic_map[topic](data)
+        self.moving_map_widget.update_drone_position(payload.n, payload.e, payload.d)
+        self.altitude_indicator.set_altitude(payload.d)
 
     def clear(self) -> None:
         """

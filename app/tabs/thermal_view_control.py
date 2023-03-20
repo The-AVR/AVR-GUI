@@ -1,20 +1,19 @@
 import base64
-import json
 import math
 from enum import Enum, auto
 from typing import List, Optional, Tuple
 
 import numpy as np
-import scipy.interpolate
 from bell.avr.mqtt.payloads import (
-    AvrPcmFireLaserPayload,
-    AvrPcmSetLaserOffPayload,
-    AvrPcmSetLaserOnPayload,
-    AvrPcmSetServoAbsPayload,
-    AvrPcmSetServoPctPayload,
+    AVRPCMServoAbsolute,
+    AVRPCMServoPercent,
+    AVRThermalReading,
 )
 from bell.avr.utils.timing import rate_limit
 from PySide6 import QtCore, QtGui, QtWidgets
+
+# fix for pyright bug not recognizing griddata as a memmber of scipy.interpolate
+from scipy.interpolate import griddata as scipy_interpolate_griddata
 
 from app.lib.calc import constrain, map_value
 from app.lib.color import wrap_text
@@ -121,7 +120,7 @@ class ThermalView(QtWidgets.QWidget):
         float_pixels_matrix = np.rot90(float_pixels_matrix, 1)
         rotated_float_pixels = float_pixels_matrix.flatten()
 
-        bicubic = scipy.interpolate.griddata(
+        bicubic = scipy_interpolate_griddata(
             self.points,
             rotated_float_pixels,
             (self.grid_x, self.grid_y),
@@ -179,22 +178,22 @@ class JoystickWidget(BaseTabWidget):
 
     def move_gimbal(self, x_servo_percent: int, y_servo_percent: int) -> None:
         self.send_message(
-            "avr/pcm/set_servo_pct",
-            AvrPcmSetServoPctPayload(servo=2, percent=x_servo_percent),
+            "avr/pcm/servo/percent",
+            AVRPCMServoPercent(servo=2, percent=x_servo_percent),
         )
         self.send_message(
-            "avr/pcm/set_servo_pct",
-            AvrPcmSetServoPctPayload(servo=3, percent=y_servo_percent),
+            "avr/pcm/servo/percent",
+            AVRPCMServoPercent(servo=3, percent=y_servo_percent),
         )
 
     def move_gimbal_absolute(self, x_servo_abs: int, y_servo_abs: int) -> None:
         self.send_message(
-            "avr/pcm/set_servo_abs",
-            AvrPcmSetServoAbsPayload(servo=2, absolute=x_servo_abs),
+            "avr/pcm/servo/absolute",
+            AVRPCMServoAbsolute(servo=2, position=x_servo_abs),
         )
         self.send_message(
-            "avr/pcm/set_servo_abs",
-            AvrPcmSetServoAbsPayload(servo=3, absolute=y_servo_abs),
+            "avr/pcm/servo/absolute",
+            AVRPCMServoAbsolute(servo=3, position=y_servo_abs),
         )
 
     def update_servos(self) -> None:
@@ -328,6 +327,8 @@ class ThermalViewControlWidget(BaseTabWidget):
 
         self.setWindowTitle("Thermal View/Control")
 
+        self.topic_callbacks = {"avr/thermal/reading": self.process_thermal_reading}
+
     def build(self) -> None:
         """
         Build the GUI layout
@@ -419,14 +420,14 @@ class ThermalViewControlWidget(BaseTabWidget):
         layout.addWidget(layout_splitter)
 
         # connect signals
-        self.joystick.emit_message.connect(self.emit_message.emit)
+        self.joystick.send_message_signal.connect(self.send_message_signal.emit)
 
         fire_laser_button.clicked.connect(  # type: ignore
-            lambda: self.send_message("avr/pcm/fire_laser", AvrPcmFireLaserPayload())
+            lambda: self.send_message("avr/pcm/laser/fire")
         )
 
-        laser_on_button.clicked.connect(lambda: self.set_laser(True))  # type: ignore
-        laser_off_button.clicked.connect(lambda: self.set_laser(False))  # type: ignore
+        laser_on_button.clicked.connect(self.laser_on)  # type: ignore
+        laser_off_button.clicked.connect(self.laser_off)  # type: ignore
 
         self.joystick_inverted_checkbox.clicked.connect(self.inverted_checkbox_clicked)  # type: ignore
 
@@ -439,19 +440,18 @@ class ThermalViewControlWidget(BaseTabWidget):
         """
         UserConfig.joystick_inverted = self.joystick_inverted_checkbox.isChecked()
 
-    def set_laser(self, state: bool) -> None:
-        if state:
-            topic = "avr/pcm/set_laser_on"
-            payload = AvrPcmSetLaserOnPayload()
-            text = "Laser On"
-            color = THERMAL_VIEW_CONTROL_LASER_ON
-        else:
-            topic = "avr/pcm/set_laser_off"
-            payload = AvrPcmSetLaserOffPayload()
-            text = "Laser Off"
-            color = THERMAL_VIEW_CONTROL_LASER_OFF
+    def laser_on(self) -> None:
+        text = "Laser On"
+        color = THERMAL_VIEW_CONTROL_LASER_ON
 
-        self.send_message(topic, payload)
+        self.send_message("avr/pcm/laser/on")
+        self.laser_toggle_label.setText(wrap_text(text, color))
+
+    def laser_off(self) -> None:
+        text = "Laser Off"
+        color = THERMAL_VIEW_CONTROL_LASER_OFF
+
+        self.send_message("avr/pcm/laser/off")
         self.laser_toggle_label.setText(wrap_text(text, color))
 
     def calibrate_temp(self) -> None:
@@ -459,18 +459,9 @@ class ThermalViewControlWidget(BaseTabWidget):
         self.temp_min_line_edit.setText(str(self.viewer.MINTEMP))
         self.temp_max_line_edit.setText(str(self.viewer.MAXTEMP))
 
-    def process_message(self, topic: str, payload: str) -> None:
-        """
-        Process an incoming message and update the appropriate component
-        """
-        # discard topics we don't recognize
-        if topic != "avr/thermal/reading":
-            return
-
-        data = json.loads(payload)["data"]
-
+    def process_thermal_reading(self, payload: AVRThermalReading) -> None:
         # decode the payload
-        base64Decoded = data.encode("utf-8")
+        base64Decoded = payload.data.encode("utf-8")
         asbytes = base64.b64decode(base64Decoded)
         pixel_ints = list(bytearray(asbytes))
 

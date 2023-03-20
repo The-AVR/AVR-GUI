@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import contextlib
 import json
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
+import pydantic
 from bell.avr.mqtt.constants import MQTTTopicPayload, MQTTTopics
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -139,7 +140,7 @@ class MQTTDebugWidget(BaseTabWidget):
         self.setWindowTitle("MQTT Debugger")
 
         # secondary data store to maintain dict of topics and the last message recieved
-        self.topic_payloads: Dict[str, Any] = {}
+        self.topic_payloads: Dict[str, str] = {}
 
         # data structure to hold timers to blink item
         self.topic_timer: Dict[str, QtCore.QTimer] = {}
@@ -209,6 +210,7 @@ class MQTTDebugWidget(BaseTabWidget):
 
         self.payload_text_edit_interaction = False
         self.payload_text_edit = QtWidgets.QPlainTextEdit()
+        self.payload_text_edit.setPlainText("{}")
         sender_layout.addRow(QtWidgets.QLabel("Payload:"), self.payload_text_edit)
 
         self.send_button = QtWidgets.QPushButton("Send")
@@ -222,10 +224,10 @@ class MQTTDebugWidget(BaseTabWidget):
         self.tree_widget.preload_data.connect(self.preload_data)
 
         self.topic_combo_box.textActivated.connect(self.topic_selected)  # type: ignore
-        self.payload_text_edit.textChanged.connect(self.reset_payload_text_edit_interaction)  # type: ignore
+        self.payload_text_edit.textChanged.connect(self.payload_text_edit_changed)  # type: ignore
         self.send_button.clicked.connect(  # type: ignore
             lambda: self.send_message(
-                self.topic_combo_box.currentText(), self.payload_text_edit.toPlainText()
+                self.topic_combo_box.currentText(), self.payload_text_edit.toPlainText()  # type: ignore
             )
         )
 
@@ -250,7 +252,7 @@ class MQTTDebugWidget(BaseTabWidget):
         else:
             self.running_button.setText("Paused")
 
-    def process_message(self, topic: str, payload: str) -> None:
+    def on_message(self, topic: str, payload: bytes) -> None:
         # sourcery skip: assign-if-exp
         """
         Process a new message on a topic.
@@ -289,7 +291,7 @@ class MQTTDebugWidget(BaseTabWidget):
             self.blink_item(item, partial_topic)
 
         # insert into secondary storage
-        self.topic_payloads[topic] = payload
+        self.topic_payloads[topic] = payload.decode("utf-8")
         # self.tree_widget.expandAll()
 
         # if the topic is already selected, update the data view
@@ -401,14 +403,25 @@ class MQTTDebugWidget(BaseTabWidget):
         self.topic_combo_box.setCurrentText(topic)
         self.payload_text_edit.setPlainText(payload)
 
-    def reset_payload_text_edit_interaction(self) -> None:
+    def payload_text_edit_changed(self) -> None:
         """
         When the user changes text in the text edit, consider it to have been
         interacted with. Only exception is if it has been blanked.
         """
         # if there is already text, consider the user to have interacted
         # if there is no text, reset interaction tracker
-        self.payload_text_edit_interaction = self.payload_text_edit.toPlainText() != ""
+        self.payload_text_edit_interaction = (
+            self.payload_text_edit.toPlainText() not in ["", "{}"]
+        )
+
+        # make sure text is valid JSON before allowing the user to send
+        try:
+            json.loads(self.payload_text_edit.toPlainText())
+            self.send_button.setEnabled(True)
+            self.send_button.setToolTip("")
+        except json.JSONDecodeError:
+            self.send_button.setEnabled(False)
+            self.send_button.setToolTip("Cannot send message with invalid JSON")
 
     def topic_selected(self, text: str) -> None:
         """
@@ -419,8 +432,10 @@ class MQTTDebugWidget(BaseTabWidget):
         if self.payload_text_edit_interaction:
             return
 
-        payload = MQTTTopicPayload[self.topic_combo_box.currentText()]
-        starter_data = {key: None for key in payload.__required_keys__}
+        payload: pydantic.BaseModel = MQTTTopicPayload[
+            self.topic_combo_box.currentText()
+        ]
+        starter_data = {key: None for key in payload.__fields__.keys()}
 
         self.payload_text_edit.blockSignals(True)
         self.payload_text_edit.setPlainText(json.dumps(starter_data, indent=4))

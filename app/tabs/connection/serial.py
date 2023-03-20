@@ -33,7 +33,7 @@ class SerialClient(QtCore.QObject):
             self.client.read(1)
             time.sleep(0.01)
 
-    def login(self, port: str, baud_rate: int) -> None:
+    def connect_(self, port: str, baud_rate: int) -> None:
         """
         Connect to the serial port. This method cannot be named "connect"
         as this conflicts with the connect methods of the Signals
@@ -66,7 +66,7 @@ class SerialClient(QtCore.QObject):
             logger.exception("Connection failed to serial port")
             self.connection_state.emit(ConnectionState.failure)
 
-    def logout(self) -> None:
+    def stop(self) -> None:
         """
         Disconnect from the serial port.
         """
@@ -137,11 +137,11 @@ class SerialConnectionWidget(QtWidgets.QWidget):
 
         # set up connections
         self.connect_button.clicked.connect(  # type: ignore
-            lambda: self.serial_client.login(
+            lambda: self.serial_client.connect_(
                 self.com_port_combo.currentText(), int(self.baud_rate_line_edit.text())
             )
         )
-        self.disconnect_button.clicked.connect(self.serial_client.logout)  # type: ignore
+        self.disconnect_button.clicked.connect(self.serial_client.stop)  # type: ignore
 
     def set_connected_state(self, connection_state: ConnectionState) -> None:
         connected = connection_state == ConnectionState.connected
