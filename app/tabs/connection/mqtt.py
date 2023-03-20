@@ -1,6 +1,7 @@
 from typing import Any
 
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as paho_mqtt
+from bell.avr.mqtt.client import MQTTClient as BaseMQTTClient
 from loguru import logger
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -11,7 +12,7 @@ from app.lib.user_config import UserConfig
 from app.lib.widgets import IntLineEdit
 
 
-class MQTTClient(QtCore.QObject):
+class MQTTClient(BaseMQTTClient, QtCore.QObject):
     # This class MUST inherit from QObject in order for the signals to work
 
     # This class works with a QSigna based architecture, as the MQTT client
@@ -23,62 +24,35 @@ class MQTTClient(QtCore.QObject):
 
     # Once the Signal objects are created, they transform into SignalInstance objects
     connection_state: QtCore.SignalInstance = QtCore.Signal(object)  # type: ignore
-    message: QtCore.SignalInstance = QtCore.Signal(str, str)  # type: ignore
+    on_message_signal: QtCore.SignalInstance = QtCore.Signal(str, bytes)  # type: ignore
 
     def __init__(self) -> None:
         super().__init__()
 
-        self.client = mqtt.Client()
-        self.client.on_connect = self.on_connect
-        self.client.on_message = self.on_message
-        self.client.on_disconnect = self.on_disconnect
-
-    def on_connect(
-        self, client: mqtt.Client, userdata: Any, flags: dict, rc: int
-    ) -> None:
-        """
-        Callback when the MQTT client connects
-        """
-        # subscribe to all topics
-        logger.debug("Subscribing to all topics")
-        client.subscribe("#")
+        self.subscribe_to_all_topics = True
+        self.enable_verbose_logging = True
 
     def on_message(
-        self, client: mqtt.Client, userdata: Any, msg: mqtt.MQTTMessage
+        self, client: paho_mqtt.Client, userdata: Any, msg: paho_mqtt.MQTTMessage
     ) -> None:
         """
         Callback for every MQTT message
         """
-        self.message.emit(msg.topic, msg.payload.decode("utf-8"))
+        self.on_message_signal.emit(msg.topic, msg.payload)
 
-    def on_disconnect(
-        self,
-        client: mqtt.Client,
-        userdata: Any,
-        rc: int,
-    ) -> None:
-        """
-        Callback when the MQTT client disconnects
-        """
-        logger.debug("Disconnected from MQTT server")
+    def on_disconnect(self, *args) -> None:
+        super().on_disconnect(*args)
         self.connection_state.emit(ConnectionState.disconnected)
 
-    def login(self, host: str, port: int) -> None:
-        """
-        Connect the MQTT client to the server. This method cannot be named "connect"
-        as this conflicts with the connect methods of the Signals
-        """
+    def connect_(self, host: str, port: int) -> None:
         # do nothing on empty sring
         if not host:
             return
 
-        logger.info(f"Connecting to MQTT server at {host}:{port}")
         self.connection_state.emit(ConnectionState.connecting)
 
         try:
-            # try to connect to MQTT server
-            self.client.connect(host=host, port=port, keepalive=60)
-            self.client.loop_start()
+            self.run_non_blocking(host, port)
 
             # save settings
             UserConfig.mqtt_host = host
@@ -89,31 +63,13 @@ class MQTTClient(QtCore.QObject):
             self.connection_state.emit(ConnectionState.connected)
 
         except Exception:
-            logger.exception("Connection failed to MQTT server")
+            logger.exception("Connection failed to MQTT broker")
             self.connection_state.emit(ConnectionState.failure)
 
-    def logout(self) -> None:
-        """
-        Disconnect the MQTT client to the server.
-        """
-        logger.info("Disconnecting from MQTT server")
+    def stop(self) -> None:
         self.connection_state.emit(ConnectionState.disconnecting)
-
-        self.client.disconnect()
-        self.client.loop_stop()
-
-        logger.info("Disconnected from MQTT server")
+        super().stop()
         self.connection_state.emit(ConnectionState.disconnected)
-
-    def publish(self, topic: str, payload: Any) -> None:
-        """
-        Publish an MQTT message. Proxy function to the underlying client
-        """
-        if not topic:
-            return
-
-        logger.debug(f"Publishing message {topic}: {payload}")
-        self.client.publish(topic, payload)
 
 
 class MQTTConnectionWidget(QtWidgets.QWidget):
@@ -168,11 +124,11 @@ class MQTTConnectionWidget(QtWidgets.QWidget):
         # set up connections
         self.hostname_line_edit.returnPressed.connect(self.connect_button.click)  # type: ignore
         self.connect_button.clicked.connect(  # type: ignore
-            lambda: self.mqtt_client.login(
+            lambda: self.mqtt_client.connect_(
                 self.hostname_line_edit.text(), int(self.port_line_edit.text())
             )
         )
-        self.disconnect_button.clicked.connect(self.mqtt_client.logout)  # type: ignore
+        self.disconnect_button.clicked.connect(self.mqtt_client.stop)  # type: ignore
 
     def set_connected_state(self, connection_state: ConnectionState) -> None:
         """

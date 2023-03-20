@@ -7,6 +7,9 @@ on:
       - main
       - develop
 
+permissions:
+  pull-requests: write
+
 jobs:
   tests:
     uses: bellflight/github-actions/.github/workflows/avr_python_tests.yml@main

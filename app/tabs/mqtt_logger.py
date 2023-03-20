@@ -133,10 +133,11 @@ class MQTTLoggerWidget(BaseTabWidget):
             # set button text
             self.recording_button.setText("Record")
 
-    def process_message(self, topic: str, payload: str) -> None:
+    def on_message(self, topic: str, payload: bytes) -> None:
         """
         Process a new message on a topic.
         """
+
         # do nothing if paused
         if not self.recording:
             return
@@ -144,5 +145,5 @@ class MQTTLoggerWidget(BaseTabWidget):
         # Write time_stamp, topic, payload to log file
         if self.csv_writer is not None:
             self.csv_writer.writerow(
-                [datetime.datetime.now().isoformat(), topic, payload]
+                [datetime.datetime.now().isoformat(), topic, payload.decode("utf-8")]
             )

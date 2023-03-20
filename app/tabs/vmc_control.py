@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 import functools
-from typing import List, Literal, Tuple
+from typing import List, Tuple
 
-from bell.avr.mqtt.payloads import (
-    AvrPcmSetBaseColorPayload,
-    AvrPcmSetServoOpenClosePayload,
-)
+from bell.avr.mqtt.payloads import AVRPCMColorSet, AVRPCMServo
 from PySide6 import QtCore, QtWidgets
 
 from app.lib.color import wrap_text
@@ -86,11 +83,11 @@ class VMCControlWidget(BaseTabWidget):
         servo_all_layout = QtWidgets.QHBoxLayout()
 
         servo_all_open_button = QtWidgets.QPushButton("Open all")
-        servo_all_open_button.clicked.connect(lambda: self.set_servo_all("open"))  # type: ignore
+        servo_all_open_button.clicked.connect(self.open_servo_all)  # type: ignore
         servo_all_layout.addWidget(servo_all_open_button)
 
         servo_all_close_button = QtWidgets.QPushButton("Close all")
-        servo_all_close_button.clicked.connect(lambda: self.set_servo_all("close"))  # type: ignore
+        servo_all_close_button.clicked.connect(self.close_servo_all)  # type: ignore
         servo_all_layout.addWidget(servo_all_close_button)
 
         servos_layout.addLayout(servo_all_layout)
@@ -101,11 +98,11 @@ class VMCControlWidget(BaseTabWidget):
             servo_groupbox.setLayout(servo_layout)
 
             servo_open_button = QtWidgets.QPushButton("Open")
-            servo_open_button.clicked.connect(functools.partial(self.set_servo, i, "open"))  # type: ignore
+            servo_open_button.clicked.connect(functools.partial(self.open_servo, i))  # type: ignore
             servo_layout.addWidget(servo_open_button)
 
             servo_close_button = QtWidgets.QPushButton("Close")
-            servo_close_button.clicked.connect(functools.partial(self.set_servo, i, "close"))  # type: ignore
+            servo_close_button.clicked.connect(functools.partial(self.close_servo, i))  # type: ignore
             servo_layout.addWidget(servo_close_button)
 
             servo_label = QtWidgets.QLabel()
@@ -133,35 +130,42 @@ class VMCControlWidget(BaseTabWidget):
 
         # layout.addWidget(reset_groupbox, 3, 3, 1, 1)
 
-    def set_servo(self, number: int, action: Literal["open", "close"]) -> None:
+    def open_servo(self, number: int) -> None:
         """
-        Set a servo state
+        Open a servo
         """
-        self.send_message(
-            "avr/pcm/set_servo_open_close",
-            AvrPcmSetServoOpenClosePayload(servo=number, action=action),
-        )
+        self.send_message("avr/pcm/servo/open", AVRPCMServo(servo=number))
 
-        if action == "open":
-            text = "Opened"
-            color = VMC_CONTROL_SERVO_OPEN_COLOR
-        else:
-            text = "Closed"
-            color = VMC_CONTROL_SERVO_CLOSED_COLOR
-
+        text = "Opened"
+        color = VMC_CONTROL_SERVO_OPEN_COLOR
         self.servo_labels[number].setText(wrap_text(text, color))
 
-    def set_servo_all(self, action: Literal["open", "close"]) -> None:
+    def close_servo(self, number: int) -> None:
         """
-        Set all servos to the same state
+        Open a servo
+        """
+        self.send_message("avr/pcm/servo/close", AVRPCMServo(servo=number))
+
+        text = "Closed"
+        color = VMC_CONTROL_SERVO_CLOSED_COLOR
+        self.servo_labels[number].setText(wrap_text(text, color))
+
+    def open_servo_all(self) -> None:
+        """
+        Open all servos
         """
         for i in range(self.number_of_servos):
-            self.set_servo(i, action)
+            self.open_servo(i)
+
+    def close_servo_all(self) -> None:
+        """
+        Close all servos
+        """
+        for i in range(self.number_of_servos):
+            self.close_servo(i)
 
     def set_led(self, color: Tuple[int, int, int, int]) -> None:
         """
         Set LED color
         """
-        self.send_message(
-            "avr/pcm/set_base_color", AvrPcmSetBaseColorPayload(wrgb=color)
-        )
+        self.send_message("avr/pcm/color/set", AVRPCMColorSet(wrgb=color))
