@@ -4,7 +4,6 @@ from enum import Enum, auto
 from typing import List, Optional, Tuple
 
 import numpy as np
-import scipy.interpolate
 from bell.avr.mqtt.payloads import (
     AVRPCMServoAbsolute,
     AVRPCMServoPercent,
@@ -12,6 +11,9 @@ from bell.avr.mqtt.payloads import (
 )
 from bell.avr.utils.timing import rate_limit
 from PySide6 import QtCore, QtGui, QtWidgets
+
+# fix for pyright bug not recognizing griddata as a memmber of scipy.interpolate
+from scipy.interpolate import griddata as scipy_interpolate_griddata
 
 from app.lib.calc import constrain, map_value
 from app.lib.color import wrap_text
@@ -118,7 +120,7 @@ class ThermalView(QtWidgets.QWidget):
         float_pixels_matrix = np.rot90(float_pixels_matrix, 1)
         rotated_float_pixels = float_pixels_matrix.flatten()
 
-        bicubic = scipy.interpolate.griddata(
+        bicubic = scipy_interpolate_griddata(
             self.points,
             rotated_float_pixels,
             (self.grid_x, self.grid_y),
