@@ -1,7 +1,7 @@
 import base64
 import math
 from enum import Enum, auto
-from typing import List, Optional, Tuple
+from typing import List
 
 import numpy as np
 from bell.avr.mqtt.payloads import (
@@ -151,22 +151,32 @@ class JoystickWidget(BaseTabWidget):
     def __init__(self, parent: QtWidgets.QWidget) -> None:
         super().__init__(parent)
 
-        self.setFixedSize(300, 300)
+        # dimensions of the bounding box, and joystick
+        self.BOUNDING_BOX_WIDTH = 200
+        self.BOUNDING_BOX_HEIGHT = 200
+        self.JOYSTICK_RADIUS = 20
 
-        self.moving_offset = QtCore.QPointF(0, 0)
+        # add an extra amount so things are clipping at the edge
+        self.WIDTH = round(self.BOUNDING_BOX_WIDTH * 1.5)
+        self.HEIGHT = round(self.BOUNDING_BOX_HEIGHT * 1.5)
 
-        self.grab_center = False
-        self.__max_distance = 100
+        self.setFixedSize(self.WIDTH, self.HEIGHT)
 
-        self.current_y = 0
-        self.current_x = 0
+        # calculate edges of bounding box
+        self.BOUNDING_BOX_MIN_X = int(self._center().x() - self.BOUNDING_BOX_WIDTH / 2)
+        self.BOUNDING_BOX_MAX_X = int(self._center().x() + self.BOUNDING_BOX_WIDTH / 2)
+        self.BOUNDING_BOX_MIN_Y = int(self._center().y() - self.BOUNDING_BOX_HEIGHT / 2)
+        self.BOUNDING_BOX_MAX_Y = int(self._center().y() + self.BOUNDING_BOX_HEIGHT / 2)
 
-        self.servoxmin = 10
-        self.servoymin = 10
-        self.servoxmax = 99
-        self.servoymax = 99
+        # absolute position within the widget of where the joystick is
+        self.joystick_center_abs = QtCore.QPointF(0, 0)
+        # relative position within the widget of where the joystick is
+        self.joystick_center_rel = QtCore.QPointF(0, 0)
 
-        # servo declarations
+        # record if joystick was grabbed
+        self.joystick_grabbed = False
+
+        # servo values
         self.SERVO_ABS_MAX = 2200
         self.SERVO_ABS_MIN = 700
 
@@ -200,124 +210,115 @@ class JoystickWidget(BaseTabWidget):
         """
         Update the servos on joystick movement.
         """
-        # y_reversed = 100 - self.current_y
-
-        # x_servo_percent = round(map_value(self.current_x, 0, 100, 10, 99))
-        # y_servo_percent = round(map_value(y_reversed, 0, 100, 10, 99))
-        #
-        # if x_servo_percent < self.servoxmin:
-        #     return
-        # if y_servo_percent < self.servoymin:
-        #     return
-        # if x_servo_percent > self.servoxmax:
-        #     return
-        # if y_servo_percent > self.servoymax:
-        #     return
-        #
-        # self.move_gimbal(x_servo_percent, y_servo_percent)
-
-        y_reversed = 225 - self.current_y
-        # side to side  270 left, 360 right
-
         x_servo_abs = round(
             map_value(
-                self.current_x + 25, 25, 225, self.SERVO_ABS_MIN, self.SERVO_ABS_MAX
+                self.joystick_center_rel.x(),
+                0,
+                self.BOUNDING_BOX_WIDTH,
+                self.SERVO_ABS_MIN,
+                self.SERVO_ABS_MAX,
             )
         )
         y_servo_abs = round(
-            map_value(y_reversed, 25, 225, self.SERVO_ABS_MIN, self.SERVO_ABS_MAX)
+            map_value(
+                self.joystick_center_rel.y(),
+                0,
+                self.BOUNDING_BOX_HEIGHT,
+                self.SERVO_ABS_MIN,
+                self.SERVO_ABS_MAX,
+            )
         )
 
         self.move_gimbal_absolute(x_servo_abs, y_servo_abs)
 
-    def _center_ellipse(self) -> QtCore.QRectF:
+    def _joystick_rect(self) -> QtCore.QRectF:
+        """
+        Return the rectangle representing the edges of the joystick.
+        """
         # sourcery skip: assign-if-exp
-        if self.grab_center:
-            center = self.moving_offset
+        if self.joystick_grabbed:
+            # if the joystick was grabbed, the center is now it's current position
+            center = self.joystick_center_abs
         else:
+            # otherwise, re-center i
             center = self._center()
 
-        return QtCore.QRectF(-20, -20, 40, 40).translated(center)
+        return QtCore.QRectF(
+            -self.JOYSTICK_RADIUS,
+            -self.JOYSTICK_RADIUS,
+            2 * self.JOYSTICK_RADIUS,
+            2 * self.JOYSTICK_RADIUS,
+        ).translated(center)
 
     def _bound_joystick(self, point: QtCore.QPoint) -> QtCore.QPoint:
         """
         If the joystick is leaving the widget, bound it to the edge of the widget.
         """
-        if point.x() > (self._center().x() + self.__max_distance):
-            point.setX(int(self._center().x() + self.__max_distance))
-        elif point.x() < (self._center().x() - self.__max_distance):
-            point.setX(int(self._center().x() - self.__max_distance))
+        if point.x() > (self.BOUNDING_BOX_MAX_X):
+            point.setX(self.BOUNDING_BOX_MAX_X)
+        elif point.x() < (self.BOUNDING_BOX_MIN_X):
+            point.setX(self.BOUNDING_BOX_MIN_X)
 
-        if point.y() > (self._center().y() + self.__max_distance):
-            point.setY(int(self._center().y() + self.__max_distance))
-        elif point.y() < (self._center().y() - self.__max_distance):
-            point.setY(int(self._center().y() - self.__max_distance))
+        if point.y() > (self.BOUNDING_BOX_MAX_Y):
+            point.setY(self.BOUNDING_BOX_MAX_Y)
+        elif point.y() < (self.BOUNDING_BOX_MIN_Y):
+            point.setY(self.BOUNDING_BOX_MIN_Y)
+
         return point
-
-    def joystick_direction(self) -> Optional[Tuple[Direction, float]]:
-        """
-        Retrieve the direction the joystick is moving
-        """
-        if not self.grab_center:
-            return None
-
-        norm_vector = QtCore.QLineF(self._center(), self.moving_offset)
-        current_distance = norm_vector.length()
-        angle = norm_vector.angle()
-
-        distance = min(current_distance / self.__max_distance, 1.0)
-
-        if 45 <= angle < 135:
-            return (Direction.Up, distance)
-        elif 135 <= angle < 225:
-            return (Direction.Left, distance)
-        elif 225 <= angle < 315:
-            return (Direction.Down, distance)
-
-        return (Direction.Right, distance)
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
         painter = QtGui.QPainter(self)
+
+        # draw the bounding box
         bounds = QtCore.QRectF(
-            -self.__max_distance,
-            -self.__max_distance,
-            self.__max_distance * 2,
-            self.__max_distance * 2,
-        ).translated(self._center())
-
-        # painter.drawEllipse(bounds)
+            self.BOUNDING_BOX_MIN_X,
+            self.BOUNDING_BOX_MIN_Y,
+            self.BOUNDING_BOX_WIDTH,
+            self.BOUNDING_BOX_HEIGHT,
+        )
         painter.drawRect(bounds)
-        painter.setBrush(QtCore.Qt.GlobalColor.black)
 
-        painter.drawEllipse(self._center_ellipse())
+        # draw the joystick
+        painter.setBrush(QtCore.Qt.GlobalColor.black)
+        painter.drawEllipse(self._joystick_rect())
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> QtGui.QMouseEvent:
         """
-        On a mouse press, check if we've clicked on the center of the joystick.
+        On a mouse press, check if we've clicked on the joystick.
         """
-        self.grab_center = self._center_ellipse().contains(event.pos())
+        self.joystick_grabbed = self._joystick_rect().contains(event.pos())
         return event
 
     def mouseReleaseEvent(self, event: QtCore.QEvent) -> None:
-        # self.grab_center = False
-        # self.moving_offset = QtCore.QPointF(0, 0)
+        """
+        When the mouse is released, update the joystick position. This is
+        for when the center is clicked, and not the joystick itself.
+        """
+        # trigger a repaint
         self.update()
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
-        if self.grab_center:
-            self.moving_offset = self._bound_joystick(event.pos())
+        """
+        Process a mouse move event.
+        """
+        if self.joystick_grabbed:
+            self.joystick_center_abs = self._bound_joystick(event.pos())
+            # trigger a repaint
             self.update()
 
-        moving_offset_y = self.moving_offset.y()
-        if not UserConfig.joystick_inverted:
-            moving_offset_y = self.height() - moving_offset_y
+        joystick_center_abs_y = self.joystick_center_abs.y()
+        if UserConfig.joystick_inverted:
+            joystick_center_abs_y = self.height() - joystick_center_abs_y
 
-        # print(self.joystick_direction())
-        self.current_x = (
-            self.moving_offset.x() - self._center().x() + self.__max_distance
+        # set the current relative position
+        self.joystick_center_rel = QtCore.QPointF(
+            self.joystick_center_abs.x()
+            - self._center().x()
+            + self.BOUNDING_BOX_WIDTH / 2,
+            joystick_center_abs_y - self._center().y() + self.BOUNDING_BOX_HEIGHT / 2,
         )
-        self.current_y = moving_offset_y - self._center().y() + self.__max_distance
 
+        # update servos
         rate_limit(self.update_servos, frequency=50)
 
 
