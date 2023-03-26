@@ -100,6 +100,14 @@ class _UserConfig:
         return self.__set("log_file_directory", value)
 
     @property
+    def force_color_mode(self) -> Literal["dark", "light", None]:
+        return self.__get("force_color_mode", Literal["dark", "light", None], None)
+
+    @force_color_mode.setter
+    def force_color_mode(self, value: Literal["dark", "light", None]) -> None:
+        return self.__set("force_color_mode", value)
+
+    @property
     def joystick_inverted(self) -> bool:
         return self.__get("joystick_inverted", bool, False)
 
@@ -108,12 +116,45 @@ class _UserConfig:
         return self.__set("joystick_inverted", value)
 
     @property
-    def force_color_mode(self) -> Literal["dark", "light", None]:
-        return self.__get("force_color_mode", Literal["dark", "light", None], None)
+    def gamepad_guid(self) -> str:
+        return self.__get("gamepad_guid", str, "")
 
-    @force_color_mode.setter
-    def force_color_mode(self, value: Literal["dark", "light", None]) -> None:
-        return self.__set("force_color_mode", value)
+    @gamepad_guid.setter
+    def gamepad_guid(self, value: str) -> None:
+        return self.__set("gamepad_guid", value)
+
+    # for my T-Flight HOTAS X, x is 0, y is 1
+    @property
+    def gamepad_x_axis(self) -> int:
+        return self.__get("gamepad_x_axis", int, 0)
+
+    @gamepad_x_axis.setter
+    def gamepad_x_axis(self, value: int) -> None:
+        return self.__set("gamepad_x_axis", value)
+
+    @property
+    def gamepad_x_axis_inverted(self) -> bool:
+        return self.__get("gamepad_x_axis_inverted", int, 0)
+
+    @gamepad_x_axis_inverted.setter
+    def gamepad_x_axis_inverted(self, value: bool) -> None:
+        return self.__set("gamepad_x_axis_inverted", value)
+
+    @property
+    def gamepad_y_axis(self) -> int:
+        return self.__get("gamepad_y_axis", int, 1)
+
+    @gamepad_y_axis.setter
+    def gamepad_y_axis(self, value: int) -> None:
+        return self.__set("gamepad_y_axis", value)
+
+    @property
+    def gamepad_y_axis_inverted(self) -> bool:
+        return self.__get("gamepad_y_axis_inverted", int, 0)
+
+    @gamepad_y_axis_inverted.setter
+    def gamepad_y_axis_inverted(self, value: bool) -> None:
+        return self.__set("gamepad_y_axis_inverted", value)
 
 
 UserConfig = _UserConfig()

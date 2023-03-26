@@ -19,6 +19,7 @@
     pyinstaller        = "^5.7.0"
     darkdetect         = "^0.8.0"
     typeguard          = "^2.13.3"
+pygame = "^2.3.0"
 
 [tool.poetry.group.dev.dependencies]
     pre-commit = "^3.1.1"
