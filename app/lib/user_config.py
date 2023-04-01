@@ -42,10 +42,10 @@ class _UserConfig:
         if key in data:
             value = data[key]
 
-            with contextlib.suppress(TypeError):
+            with contextlib.suppress(typeguard.TypeCheckError):
                 # make sure the value is of the correct type
                 # otherwise, return the default
-                typeguard.check_type(key, value, type_hint)
+                typeguard.check_type(value, type_hint)
                 return value
 
         # if we have a set default value that is not None, write it out
