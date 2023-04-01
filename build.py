@@ -12,7 +12,7 @@ def main(version: str) -> None:
         "--onefile",
         "--noconfirm",
         "--name",
-        f"AVRGUI.{version}",
+        "AVRGUI",
         "--icon",
         os.path.join(THIS_DIR, "assets", "img", "logo.ico"),
         "--add-data",
@@ -23,6 +23,13 @@ def main(version: str) -> None:
 
     print(cmd)
     subprocess.check_call(cmd, cwd=THIS_DIR)
+
+    # rename executable when running in CI
+    if os.environ["CI"] == "true":
+        os.rename(
+            os.path.join(THIS_DIR, "dist", "AVRGUI.exe"),
+            os.path.join(THIS_DIR, "dist", f"AVRGUI.{version}.exe"),
+        )
 
 
 if __name__ == "__main__":

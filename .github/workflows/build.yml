@@ -13,7 +13,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    if: "${{ !contains(github.event.head_commit.message, 'ci skip') }}"
 
     steps:
       - name: Checkout Code
@@ -36,6 +36,15 @@ jobs:
       - name: Get Short SHA
         shell: bash
         run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Cache PyInstaller
+        id: cache-pynstaller
+        uses: actions/cache@v3
+        with:
+          path: build
+          key: pyinstaller-cache-${{ hashFiles('poetry.lock', 'app/**') }}
+          restore-keys: |
+            pyinstaller-cache
 
       - name: Build GUI
         run: poetry run python build.py --version ${{ env.SHORT_SHA }}
