@@ -1,7 +1,7 @@
 import contextlib
 import json
 import os
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 import typeguard
 
@@ -11,9 +11,17 @@ from app.lib.directory_config import ROOT_DIR
 class _UserConfig:
     config_file = os.path.join(ROOT_DIR, "settings.json")
 
+    def __init__(self):
+        self.__file_cache: Optional[dict] = None
+
     def __read(self) -> dict:
+        # if the file does not exist, return an empty dict
         if not os.path.isfile(self.config_file):
             return {}
+
+        # if we have a cached version, return it
+        if self.__file_cache is not None:
+            return self.__file_cache
 
         try:
             with open(self.config_file, "r") as fp:
@@ -23,6 +31,7 @@ class _UserConfig:
             if not isinstance(data, dict):
                 raise ValueError
 
+            self.__file_cache = data
             return data
 
         except (json.JSONDecodeError, ValueError):
@@ -31,6 +40,8 @@ class _UserConfig:
             return {}
 
     def __write(self, data: dict) -> None:
+        self.__file_cache = data
+
         with open(self.config_file, "w") as fp:
             json.dump(data, fp, indent=4)
 
