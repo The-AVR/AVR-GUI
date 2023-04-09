@@ -295,7 +295,9 @@ class MainWindow(QtWidgets.QWidget):
 
 def main() -> None:
     # create Qt Application instance
+    # setting the Style to fusion allows Qt to respect Windows light/dark preference
     app = QtWidgets.QApplication()
+    app.setStyle("Fusion")
 
     # create the main window
     w = MainWindow()

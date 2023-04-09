@@ -17,12 +17,7 @@ from scipy.interpolate import griddata as scipy_interpolate_griddata
 
 from app.lib.calc import constrain, map_value
 from app.lib.color import wrap_text
-from app.lib.color_config import (
-    THERMAL_VIEW_CONTROL_LASER_OFF,
-    THERMAL_VIEW_CONTROL_LASER_ON,
-    THERMAL_VIEW_CONTROL_MAX_COLOR,
-    THERMAL_VIEW_CONTROL_MIN_COLOR,
-)
+from app.lib.color_config import ColorConfig
 from app.lib.user_config import UserConfig
 from app.lib.widgets import DoubleLineEdit
 from app.tabs.base import BaseTabWidget
@@ -82,8 +77,8 @@ class ThermalView(QtWidgets.QWidget):
         self.colors = [
             (int(c.red * 255), int(c.green * 255), int(c.blue * 255))
             for c in list(
-                THERMAL_VIEW_CONTROL_MIN_COLOR.range_to(
-                    THERMAL_VIEW_CONTROL_MAX_COLOR, self.COLORDEPTH
+                ColorConfig.THERMAL_VIEW_CONTROL_MIN_COLOR.range_to(
+                    ColorConfig.THERMAL_VIEW_CONTROL_MAX_COLOR, self.COLORDEPTH
                 )
             )
         ]
@@ -442,14 +437,14 @@ class ThermalViewControlWidget(BaseTabWidget):
 
     def laser_on(self) -> None:
         text = "Laser On"
-        color = THERMAL_VIEW_CONTROL_LASER_ON
+        color = ColorConfig.THERMAL_VIEW_CONTROL_LASER_ON
 
         self.send_message("avr/pcm/laser/on")
         self.laser_toggle_label.setText(wrap_text(text, color))
 
     def laser_off(self) -> None:
         text = "Laser Off"
-        color = THERMAL_VIEW_CONTROL_LASER_OFF
+        color = ColorConfig.THERMAL_VIEW_CONTROL_LASER_OFF
 
         self.send_message("avr/pcm/laser/off")
         self.laser_toggle_label.setText(wrap_text(text, color))

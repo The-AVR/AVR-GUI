@@ -8,10 +8,7 @@ import pydantic
 from bell.avr.mqtt.constants import MQTTTopicPayload, MQTTTopics
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from app.lib.color_config import (
-    MQTT_DEBUGGER_DATA_VIEW_BACKGROUND_COLOR,
-    MQTT_DEBUGGER_TOPIC_FLASH_COLOR,
-)
+from app.lib.color_config import ColorConfig
 from app.tabs.base import BaseTabWidget
 
 
@@ -179,7 +176,7 @@ class MQTTDebugWidget(BaseTabWidget):
         self.data_view = QtWidgets.QTextEdit()
         self.data_view.setReadOnly(True)
         self.data_view.setStyleSheet(
-            f"background-color: {MQTT_DEBUGGER_DATA_VIEW_BACKGROUND_COLOR.hex}"
+            f"background-color: {ColorConfig.MQTT_DEBUGGER_DATA_VIEW_BACKGROUND_COLOR.hex}"
         )
         viewer_splitter.addWidget(self.data_view)
 
@@ -363,7 +360,9 @@ class MQTTDebugWidget(BaseTabWidget):
             timer.deleteLater()
         else:
             # otherwise, set background to grey
-            self.set_item_background(item, MQTT_DEBUGGER_TOPIC_FLASH_COLOR.rgb_255)
+            self.set_item_background(
+                item, ColorConfig.MQTT_DEBUGGER_TOPIC_FLASH_COLOR.rgb_255
+            )
 
         # start new timer to clear background
         timer = QtCore.QTimer()

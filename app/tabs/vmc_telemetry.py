@@ -15,12 +15,7 @@ from PySide6 import QtCore, QtWidgets
 
 from app.lib.calc import constrain
 from app.lib.color import smear_color, wrap_text
-from app.lib.color_config import (
-    VMC_TELEMETRY_ARMED_COLOR,
-    VMC_TELEMETRY_BATTERY_MAX_COLOR,
-    VMC_TELEMETRY_BATTERY_MIN_COLOR,
-    VMC_TELEMETRY_DISARMED_COLOR,
-)
+from app.lib.color_config import ColorConfig
 from app.lib.widgets import DisplayLineEdit, StatusLabel
 from app.tabs.base import BaseTabWidget
 
@@ -253,8 +248,8 @@ class VMCTelemetryWidget(BaseTabWidget):
 
         # this is required to change the progress bar color as the value changes
         color = smear_color(
-            VMC_TELEMETRY_BATTERY_MIN_COLOR,
-            VMC_TELEMETRY_BATTERY_MAX_COLOR,
+            ColorConfig.VMC_TELEMETRY_BATTERY_MIN_COLOR,
+            ColorConfig.VMC_TELEMETRY_BATTERY_MAX_COLOR,
             value=soc,
             min_value=0,
             max_value=100,
@@ -285,10 +280,10 @@ class VMCTelemetryWidget(BaseTabWidget):
         Update armed information
         """
         if payload.armed:
-            color = VMC_TELEMETRY_ARMED_COLOR
+            color = ColorConfig.VMC_TELEMETRY_ARMED_COLOR
             text = "Armed (and dangerous)"
         else:
-            color = VMC_TELEMETRY_DISARMED_COLOR
+            color = ColorConfig.VMC_TELEMETRY_DISARMED_COLOR
             text = "Disarmed"
 
         self.armed_label.setText(wrap_text(text, color))
