@@ -1,4 +1,4 @@
-FROM cr.nthnv.me/docker.io/library/python:3.10
+FROM docker.io/library/python:3.10
 
 WORKDIR /work
 
