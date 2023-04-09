@@ -6,6 +6,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from app.lib.enums import ConnectionState
 from app.lib.qt_icon import set_icon
+from app.lib.user_config import UserConfig
 from app.tabs.autonomy import AutonomyWidget
 from app.tabs.connection.main import MainConnectionWidget
 from app.tabs.moving_map import MovingMapWidget
@@ -294,9 +295,14 @@ class MainWindow(QtWidgets.QWidget):
 
 
 def main() -> None:
+    # allow the users to force light mode
+    args = sys.argv
+    if sys.platform == "win32" and UserConfig.force_light_mode:
+        args += ["-platform", "windows:darkmode=0"]
+
     # create Qt Application instance
+    app = QtWidgets.QApplication(args)
     # setting the Style to fusion allows Qt to respect Windows light/dark preference
-    app = QtWidgets.QApplication()
     app.setStyle("Fusion")
 
     # create the main window

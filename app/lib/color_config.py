@@ -2,7 +2,6 @@ from PySide6 import QtGui
 
 from app.lib.color import Color
 from app.lib.enums import ConnectionState
-from app.lib.user_config import UserConfig
 
 BLACK_COLOR = Color("#000000")
 WHITE_COLOR = Color("#ffffff")
@@ -17,23 +16,16 @@ class _ColorConfig:
     @property
     def is_dark(self) -> bool:
         """
-        Return whether the system is in dark mode.
+        Return whether the application is in dark mode.
         This must be done after the QApplication is created and style applied
         (after import).
         """
-        if UserConfig.force_color_mode == "light":
-            # user has forced light mode
-            return False
-        elif UserConfig.force_color_mode == "dark":
-            # user has forced dark mode
-            return True
-        else:
-            # try our best
-            default_palette = QtGui.QPalette()
-            return (
-                default_palette.windowText().color().lightness()
-                > default_palette.window().color().lightness()
-            )
+        # try our best
+        default_palette = QtGui.QPalette()
+        return (
+            default_palette.windowText().color().lightness()
+            > default_palette.window().color().lightness()
+        )
 
     @property
     def MQTT_DEBUGGER_TOPIC_FLASH_COLOR(self) -> Color:
