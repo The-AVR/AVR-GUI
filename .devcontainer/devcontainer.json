@@ -1,0 +1,23 @@
+{
+    "name": "avr-gui",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "postAttachCommand": "git config gpg.program gpg2",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.black-formatter",
+                "anseki.vscode-color",
+                "ms-azuretools.vscode-docker",
+                "tamasfe.even-better-toml",
+                "mhutchie.git-graph",
+                "kisstkondoros.vscode-gutter-preview",
+                "Tyriar.luna-paint",
+                "ms-python.python",
+                "njqdev.vscode-python-typehint",
+                "charliermarsh.ruff"
+            ]
+        }
+    }
+}
