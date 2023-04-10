@@ -9,9 +9,7 @@ from app.lib.calc import constrain, normalize_value
 from app.lib.color import smear_color
 from app.lib.color_config import (
     BLACK_COLOR,
-    MOVING_MAP_ALTITUDE_MAX_COLOR,
-    MOVING_MAP_ALTITUDE_MIN_COLOR,
-    MOVING_MAP_GROUND_COLOR,
+    ColorConfig,
 )
 from app.lib.directory_config import IMG_DIR
 from app.tabs.base import BaseTabWidget
@@ -228,7 +226,9 @@ class DroneAltitudeWidget(QtWidgets.QWidget):
         self.canvas.addItem(self.drone_icon)
 
         # add ground
-        ground_pen = QtGui.QPen(QtGui.QColor(*MOVING_MAP_GROUND_COLOR.rgb_255))
+        ground_pen = QtGui.QPen(
+            QtGui.QColor(*ColorConfig.MOVING_MAP_GROUND_COLOR.rgb_255)
+        )
         ground_pen.setWidth(self.GROUND_WIDTH)
         self.canvas.addLine(
             0, self.CANVAS_HEIGHT, self.CANVAS_WIDTH, self.CANVAS_HEIGHT, ground_pen
@@ -457,8 +457,8 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
         # initially was brown to light blue, but was pointed out that
         # it was hard to distinguish for color blind individuals
         color = smear_color(
-            MOVING_MAP_ALTITUDE_MIN_COLOR,
-            MOVING_MAP_ALTITUDE_MAX_COLOR,
+            ColorConfig.MOVING_MAP_ALTITUDE_MIN_COLOR,
+            ColorConfig.MOVING_MAP_ALTITUDE_MAX_COLOR,
             value=-z,
             min_value=0,
             max_value=20,

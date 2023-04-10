@@ -4,7 +4,7 @@ from typing import Optional
 
 from PySide6 import QtGui, QtWidgets
 
-from app.lib.color_config import DISPLAY_LINE_EDIT_BACKGROUND_COLOR
+from app.lib.color_config import ColorConfig
 from app.lib.directory_config import IMG_DIR
 
 
@@ -42,7 +42,7 @@ class DisplayLineEdit(QtWidgets.QLineEdit):
 
         self.setReadOnly(True)
         self.setStyleSheet(
-            f"background-color: {DISPLAY_LINE_EDIT_BACKGROUND_COLOR.hex}"
+            f"background-color: {ColorConfig.DISPLAY_LINE_EDIT_BACKGROUND_COLOR.hex}"
         )
         self.setMaximumWidth(100)
 

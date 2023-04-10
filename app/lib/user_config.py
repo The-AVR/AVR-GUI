@@ -1,7 +1,7 @@
 import contextlib
 import json
 import os
-from typing import Any, Literal
+from typing import Any
 
 import typeguard
 
@@ -108,12 +108,16 @@ class _UserConfig:
         return self.__set("joystick_inverted", value)
 
     @property
-    def force_color_mode(self) -> Literal["dark", "light", None]:
-        return self.__get("force_color_mode", Literal["dark", "light", None], None)
+    def force_light_mode(self) -> bool:
+        """
+        Allow the use to force the application to light mode.
+        This only works on Windows.
+        """
+        return self.__get("force_light_mode", bool, False)
 
-    @force_color_mode.setter
-    def force_color_mode(self, value: Literal["dark", "light", None]) -> None:
-        return self.__set("force_color_mode", value)
+    @force_light_mode.setter
+    def force_light_mode(self, value: bool) -> None:
+        return self.__set("force_light_mode", value)
 
 
 UserConfig = _UserConfig()
