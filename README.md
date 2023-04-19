@@ -164,20 +164,13 @@ class Sandbox(MQTTModule):
 #### Building Autonomous Enable Drop
 
 Additionally, buttons for enabling/disabling autonomous water drops are
-provided on this page. These buttons send a message to the MQTT topic
-`avr/autonomous/building/drop` with a payload of:
+provided on this page. These buttons send an empty message one of either MQTT
+topics `avr/autonomous/building/enable` or `avr/autonomous/building/enable`.
 
-```json
-{
-  "id": 0,
-  "enabled": true
-}
-```
-
-This message can be used to tell you drone what buildings are on fire and
+These messages can be used to tell the drone what buildings are on fire and
 if you want to drop water on it or not. For a full list of which buildings
 have water drops please refer to the game manual. The activity of using the
-`avr/autonomous/building/drop` will be implemented by the students in the
+`avr/autonomous/building/enable` or `disable` will be implemented by the students in the
 sandbox module. [Hint: the above example can also be used in this scenario]
 
 ### Thermal View/Control
