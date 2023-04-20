@@ -121,20 +121,8 @@ presets (red, green, blue). The "clear" button at the bottom turns off the LEDs.
 #### Autonomous Enable
 
 The "Autonomous" buttons in the tab, this is purely optional for the teams that have
-chosen to write autonomous code. These buttons send a message to the MQTT topic
-`avr/autonomous` with a payload of:
-
-```json
-// enable button
-{
-    "enable": true,
-}
-
-// disable button
-{
-    "enable": false,
-}
-```
+chosen to write autonomous code. These buttons send an empty message one of two MQTT
+topics `avr/autonomous/enable` or `avr/autonomous/disable`.
 
 For any teams writing their own autonomous code, they can write a listener
 for this topic to enable/disable their autonomous code at certain points, rather
@@ -164,14 +152,21 @@ class Sandbox(MQTTModule):
 #### Building Autonomous Enable Drop
 
 Additionally, buttons for enabling/disabling autonomous water drops are
-provided on this page. These buttons send an empty message one of two MQTT
-topics `avr/autonomous/building/enable` or `avr/autonomous/building/disable`.
+provided on this page. These buttons send a message one of two MQTT topics
+`avr/autonomous/building/enable` or `avr/autonomous/building/disable` with
+a payload containing the target building ID:
+
+```json
+{
+    "building": 0
+}
+```
 
 These messages can be used to tell the drone what buildings are on fire and
 if you want to drop water on it or not. For a full list of which buildings
 have water drops please refer to the game manual. The activity of using the
-`avr/autonomous/building/enable` or `disable` will be implemented by the students in the
-sandbox module. [Hint: the above example can also be used in this scenario]
+`avr/autonomous/building/enable` or `disable` will be implemented by the students
+in the sandbox module. [Hint: the above example can also be used in this scenario]
 
 ### Thermal View/Control
 
