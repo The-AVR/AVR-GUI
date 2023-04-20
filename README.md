@@ -157,10 +157,10 @@ class Sandbox(MQTTModule):
 
 #### Building Autonomous Enable Drop
 
-Additionally, buttons for enabling/disabling autonomous water drops are
-provided on this page. These buttons send a message one of two MQTT topics
-`avr/autonomous/building/enable` or `avr/autonomous/building/disable` with
-a payload containing the target building ID:
+Additionally, the buttons for enabling/disabling autonomous water drops are
+provided on this page. These buttons send a message to one of the two MQTT
+topics `avr/autonomous/building/enable` or `avr/autonomous/building/disable`
+with a payload containing the target building ID:
 
 ```json
 {
