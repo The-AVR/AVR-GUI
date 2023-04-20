@@ -137,12 +137,16 @@ from bell.avr.mqtt.payloads import AvrAutonomousPayload
 class Sandbox(MQTTModule):
     def __init__(self) -> None:
         self.enabled = False
-        self.topic_map = {"avr/autonomous": self.on_autonomous_message}
+        self.topic_map_enable = {"avr/autonomous/enable": self.on_autonomous_message_enable}
+        self.topic_map_disable = {"avr/autonomous/disable": self.on_autonomous_message_disable}
 
     ...
 
-    def on_autonomous_message(self, payload: AvrAutonomousPayload) -> None:
-        self.enabled = payload["enable"]
+    def on_autonomous_message_enable(self) -> None:
+        self.enabled = True
+
+    def on_autonomous_message_disable(self) -> None:
+        self.enabled = False
 
     def autonomous_code(self) -> None:
         while self.enabled:
