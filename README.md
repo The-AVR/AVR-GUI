@@ -131,8 +131,7 @@ than have it run continuously the entire time.
 Example implementation:
 
 ```python
-from bell.avr.mqtt.client import MQTTModule
-from bell.avr.mqtt.payloads import AvrAutonomousPayload
+from bell.avr.mqtt.module import MQTTModule
 
 class Sandbox(MQTTModule):
     def __init__(self) -> None:
