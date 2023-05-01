@@ -2,7 +2,7 @@ import contextlib
 import os
 from typing import Optional
 
-from PySide6 import QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from app.lib.color_config import ColorConfig
 from app.lib.directory_config import IMG_DIR
@@ -82,3 +82,16 @@ class StatusLabel(QtWidgets.QWidget):
             self.icon.setPixmap(QtGui.QPixmap(os.path.join(IMG_DIR, "green.png")))
         else:
             self.icon.setPixmap(QtGui.QPixmap(os.path.join(IMG_DIR, "red.png")))
+
+
+class PrePopupComboBox(QtWidgets.QComboBox):
+    """
+    Combobox that emits an event before the popup is shown.
+    This can be used for updating its items before the popup is shown.
+    """
+
+    popup_about_to_be_shown: QtCore.SignalInstance = QtCore.Signal()  # type: ignore
+
+    def showPopup(self) -> None:
+        self.popup_about_to_be_shown.emit()
+        super().showPopup()
