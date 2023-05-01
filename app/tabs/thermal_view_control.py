@@ -92,7 +92,7 @@ class ThermalView(QtWidgets.QWidget):
         camera_total = camera_x * camera_y
 
         # create list of x/y coordinates from the camera
-        camera_pixel_coordinats = [
+        camera_pixel_coordinates = [
             (math.floor(ix / camera_x), (ix % camera_y)) for ix in range(camera_total)
         ]
 
@@ -126,7 +126,7 @@ class ThermalView(QtWidgets.QWidget):
 
         # create a cubic interpolation of the pixel data
         bicubic = scipy_interpolate_griddata(
-            camera_pixel_coordinats,
+            camera_pixel_coordinates,
             rotated_float_pixels,
             (grid_x, grid_y),
             method="cubic",
