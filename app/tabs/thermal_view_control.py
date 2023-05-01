@@ -27,53 +27,32 @@ class ThermalView(QtWidgets.QWidget):
         super().__init__(parent)
 
         # canvas size
-        self.width_ = 300
-        self.height_ = self.width_
-
-        # pixels within canvas
-        self.pixels_x = 30
-        self.pixels_y = self.pixels_x
-
-        self.pixel_width = self.width_ / self.pixels_x
-        self.pixel_height = self.height_ / self.pixels_y
+        self.CANVAS_WIDTH = 300
+        self.CANVAS_HEIGHT = self.CANVAS_WIDTH
 
         # low range of the sensor (this will be blue on the screen)
+        # this is a default value
         self.MINTEMP = 20.0
 
         # high range of the sensor (this will be red on the screen)
+        # this is a default value
         self.MAXTEMP = 32.0
 
-        # last lowest temp from camera
-        self.last_lowest_temp = 999.0
-
         # how many color values we can have
-        self.COLORDEPTH = 1024
+        self.COLOR_DEPTH = 1024
 
-        # how many pixels the camera is
-        self.camera_x = 8
-        self.camera_y = self.camera_x
-        self.camera_total = self.camera_x * self.camera_y
-
-        # create list of x/y points
-        self.points = [
-            (math.floor(ix / self.camera_x), (ix % self.camera_y))
-            for ix in range(self.camera_total)
-        ]
-        # i'm not fully sure what this does
-        self.grid_x, self.grid_y = np.mgrid[
-            0 : self.camera_x - 1 : self.camera_total / 2j,
-            0 : self.camera_y - 1 : self.camera_total / 2j,
-        ]
-
-        # create avaiable colors
-        self.colors = [
-            (int(c.red * 255), int(c.green * 255), int(c.blue * 255))
+        # create available colors
+        self.COLOR_PALETTE = [
+            c.rgb_255
             for c in list(
                 ColorConfig.THERMAL_VIEW_CONTROL_MIN_COLOR.range_to(
-                    ColorConfig.THERMAL_VIEW_CONTROL_MAX_COLOR, self.COLORDEPTH
+                    ColorConfig.THERMAL_VIEW_CONTROL_MAX_COLOR, self.COLOR_DEPTH
                 )
             )
         ]
+
+        # last lowest temp from camera
+        self.last_lowest_temp = 999.0
 
         # create canvas
         layout = QtWidgets.QVBoxLayout()
@@ -81,54 +60,96 @@ class ThermalView(QtWidgets.QWidget):
 
         self.canvas = QtWidgets.QGraphicsScene()
         self.view = QtWidgets.QGraphicsView(self.canvas)
-        self.view.setGeometry(0, 0, self.width_, self.height_)
+        self.view.setGeometry(0, 0, self.CANVAS_WIDTH, self.CANVAS_HEIGHT)
 
         layout.addWidget(self.view)
 
         # need a bit of padding for the edges of the canvas
-        self.setFixedSize(self.width_ + 50, self.height_ + 50)
+        self.setFixedSize(self.CANVAS_WIDTH + 50, self.CANVAS_HEIGHT + 50)
 
     def set_temp_range(self, mintemp: float, maxtemp: float) -> None:
+        """
+        Set the temperature range for the viewer.
+        """
         self.MINTEMP = mintemp
         self.MAXTEMP = maxtemp
 
     def set_calibrated_temp_range(self) -> None:
-        self.MINTEMP = self.last_lowest_temp + 0.0
+        """
+        Calibrate the temperature range based on the lowest observed value.
+        """
+        self.MINTEMP = self.last_lowest_temp
         self.MAXTEMP = self.last_lowest_temp + 15.0
 
     def update_canvas(self, pixels: List[int]) -> None:
+        """
+        Update the thermal view canvas with new data.
+        """
+        # figure out how many pixels the camera has
+        # assumed to be square
+        camera_x = int(math.sqrt(len(pixels)))
+        camera_y = camera_x
+        camera_total = camera_x * camera_y
+
+        # create list of x/y coordinates from the camera
+        camera_pixel_coordinates = [
+            (math.floor(ix / camera_x), (ix % camera_y)) for ix in range(camera_total)
+        ]
+
+        # magic
+        grid_x, grid_y = np.mgrid[
+            0 : camera_x - 1 : camera_total / 2j,
+            0 : camera_y - 1 : camera_total / 2j,
+        ]
+
+        # figure out how big the squares on the canvas now are
+        # grid_x and grid_y shape are the same
+        canvas_squares_x, canvas_squares_y = np.shape(grid_x)
+        canvas_square_width = self.CANVAS_WIDTH / canvas_squares_x
+        canvas_square_height = self.CANVAS_HEIGHT / canvas_squares_y
+
+        # for all the incoming pixels, constrian them to our temperature range,
+        # and give them a value within our color depth
         float_pixels = [
-            map_value(p, self.MINTEMP, self.MAXTEMP, 0, self.COLORDEPTH - 1)
+            map_value(p, self.MINTEMP, self.MAXTEMP, 0, self.COLOR_DEPTH - 1)
             for p in pixels
         ]
 
+        # reshape flat list into our grid
+        float_pixels_matrix = np.reshape(float_pixels, (camera_x, camera_y))
+
         # Rotate 90° to orient for mounting correctly
-        float_pixels_matrix = np.reshape(float_pixels, (self.camera_x, self.camera_y))
         float_pixels_matrix = np.rot90(float_pixels_matrix, 1)
+
+        # reflatten the list
         rotated_float_pixels = float_pixels_matrix.flatten()
 
+        # create a cubic interpolation of the pixel data
         bicubic = scipy_interpolate_griddata(
-            self.points,
+            camera_pixel_coordinates,
             rotated_float_pixels,
-            (self.grid_x, self.grid_y),
+            (grid_x, grid_y),
             method="cubic",
         )
 
+        # draw on the canvas
         pen = QtGui.QPen(QtCore.Qt.PenStyle.NoPen)
         self.canvas.clear()
 
         for ix, row in enumerate(bicubic):
-            for jx, pixel in enumerate(row):
-                brush = QtGui.QBrush(
-                    QtGui.QColor(
-                        *self.colors[int(constrain(pixel, 0, self.COLORDEPTH - 1))]
-                    )
-                )
+            for jx, square in enumerate(row):
+                # constrain the value of the square to our color depth
+                square_value = int(constrain(square, 0, self.COLOR_DEPTH - 1))
+                # create a QColor object for it
+                qcolor = QtGui.QColor(*self.COLOR_PALETTE[square_value])
+                # create the brush
+                brush = QtGui.QBrush(qcolor)
+                # add the rectangle
                 self.canvas.addRect(
-                    self.pixel_width * jx,
-                    self.pixel_height * ix,
-                    self.pixel_width,
-                    self.pixel_height,
+                    canvas_square_width * jx,
+                    canvas_square_height * ix,
+                    canvas_square_width,
+                    canvas_square_height,
                     pen,
                     brush,
                 )

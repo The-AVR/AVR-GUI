@@ -1,11 +1,13 @@
-from typing import Tuple
+from __future__ import annotations
 
-from colour import Color as _Color
+from typing import Any, Generator, Tuple
+
+import colour
 
 from app.lib.calc import normalize_value
 
 
-class Color(_Color):
+class Color(colour.Color):
     """
     Small tweak to the normal `colour` library, to include a property to get the
     `Color` object's RGB values in a 0-255 range.
@@ -14,6 +16,10 @@ class Color(_Color):
     @property
     def rgb_255(self) -> Tuple[int, int, int]:
         return tuple(round(i * 255) for i in self.rgb)
+
+    def range_to(self, value: Any, steps: int) -> Generator[Color, Any, None]:
+        for hsl in colour.color_scale(self._hsl, Color(value).hsl, steps - 1):
+            yield Color(hsl=hsl)
 
 
 def smear_color(
