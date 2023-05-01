@@ -10,7 +10,7 @@ from app.lib.color import wrap_text
 from app.lib.color_config import CONNECTION_STATE_COLOR_LOOKUP
 from app.lib.enums import ConnectionState
 from app.lib.user_config import UserConfig
-from app.lib.widgets import IntLineEdit
+from app.lib.widgets import IntLineEdit, PrePopupComboBox
 
 
 class SerialClient(QtCore.QObject):
@@ -97,12 +97,10 @@ class SerialConnectionWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         self.setLayout(layout)
 
-        serial_ports = list_serial_ports()
-
         # lay out the host label and line edit
         host_layout = QtWidgets.QFormLayout()
 
-        self.com_port_combo = QtWidgets.QComboBox()
+        self.com_port_combo = PrePopupComboBox()
         host_layout.addRow(QtWidgets.QLabel("COM Port:"), self.com_port_combo)
 
         self.baud_rate_line_edit = IntLineEdit()
@@ -129,7 +127,9 @@ class SerialConnectionWidget(QtWidgets.QWidget):
         # set starting state
         self.set_connected_state(ConnectionState.disconnected)
 
-        self.com_port_combo.addItems(serial_ports)
+        self.com_port_combo.popup_about_to_be_shown.connect(
+            self.update_serial_port_list
+        )
         self.com_port_combo.setCurrentIndex(
             self.com_port_combo.findText(UserConfig.serial_port)
         )
@@ -142,6 +142,10 @@ class SerialConnectionWidget(QtWidgets.QWidget):
             )
         )
         self.disconnect_button.clicked.connect(self.serial_client.stop)  # type: ignore
+
+    def update_serial_port_list(self) -> None:
+        self.com_port_combo.clear()
+        self.com_port_combo.addItems(list_serial_ports())
 
     def set_connected_state(self, connection_state: ConnectionState) -> None:
         connected = connection_state == ConnectionState.connected

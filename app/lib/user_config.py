@@ -1,7 +1,7 @@
 import contextlib
 import json
 import os
-from typing import Any
+from typing import Any, Optional
 
 import typeguard
 
@@ -11,7 +11,11 @@ from app.lib.directory_config import ROOT_DIR
 class _UserConfig:
     config_file = os.path.join(ROOT_DIR, "settings.json")
 
+    def __init__(self):
+        self.__file_cache: Optional[dict] = None
+
     def __read(self) -> dict:
+        # if the file does not exist, return an empty dict
         if not os.path.isfile(self.config_file):
             return {}
 
@@ -100,14 +104,6 @@ class _UserConfig:
         return self.__set("log_file_directory", value)
 
     @property
-    def joystick_inverted(self) -> bool:
-        return self.__get("joystick_inverted", bool, False)
-
-    @joystick_inverted.setter
-    def joystick_inverted(self, value: bool) -> None:
-        return self.__set("joystick_inverted", value)
-
-    @property
     def force_light_mode(self) -> bool:
         """
         Allow the use to force the application to light mode.
@@ -118,6 +114,14 @@ class _UserConfig:
     @force_light_mode.setter
     def force_light_mode(self, value: bool) -> None:
         return self.__set("force_light_mode", value)
+
+    @property
+    def joystick_inverted(self) -> bool:
+        return self.__get("joystick_inverted", bool, False)
+
+    @joystick_inverted.setter
+    def joystick_inverted(self, value: bool) -> None:
+        return self.__set("joystick_inverted", value)
 
 
 UserConfig = _UserConfig()
