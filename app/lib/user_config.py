@@ -126,46 +126,5 @@ class _UserConfig:
     def joystick_inverted(self, value: bool) -> None:
         return self.__set("joystick_inverted", value)
 
-    @property
-    def gamepad_guid(self) -> str:
-        return self.__get("gamepad_guid", str, "")
-
-    @gamepad_guid.setter
-    def gamepad_guid(self, value: str) -> None:
-        return self.__set("gamepad_guid", value)
-
-    # for my T-Flight HOTAS X, x is 0, y is 1
-    @property
-    def gamepad_x_axis(self) -> int:
-        return self.__get("gamepad_x_axis", int, 0)
-
-    @gamepad_x_axis.setter
-    def gamepad_x_axis(self, value: int) -> None:
-        return self.__set("gamepad_x_axis", value)
-
-    @property
-    def gamepad_x_axis_inverted(self) -> bool:
-        return self.__get("gamepad_x_axis_inverted", int, 0)
-
-    @gamepad_x_axis_inverted.setter
-    def gamepad_x_axis_inverted(self, value: bool) -> None:
-        return self.__set("gamepad_x_axis_inverted", value)
-
-    @property
-    def gamepad_y_axis(self) -> int:
-        return self.__get("gamepad_y_axis", int, 1)
-
-    @gamepad_y_axis.setter
-    def gamepad_y_axis(self, value: int) -> None:
-        return self.__set("gamepad_y_axis", value)
-
-    @property
-    def gamepad_y_axis_inverted(self) -> bool:
-        return self.__get("gamepad_y_axis_inverted", int, 0)
-
-    @gamepad_y_axis_inverted.setter
-    def gamepad_y_axis_inverted(self, value: bool) -> None:
-        return self.__set("gamepad_y_axis_inverted", value)
-
 
 UserConfig = _UserConfig()
