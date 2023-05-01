@@ -1,7 +1,6 @@
-import base64
 import math
 from enum import Enum, auto
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 from bell.avr.mqtt.payloads import (
@@ -9,6 +8,7 @@ from bell.avr.mqtt.payloads import (
     AVRPCMServoPercent,
     AVRThermalReading,
 )
+from bell.avr.utils.images import deserialize_image
 from bell.avr.utils.timing import rate_limit
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -104,10 +104,12 @@ class ThermalView(QtWidgets.QWidget):
         self.MINTEMP = self.last_lowest_temp + 0.0
         self.MAXTEMP = self.last_lowest_temp + 15.0
 
-    def update_canvas(self, pixels: List[int]) -> None:
+    def update_canvas(self, pixels: np.ndarray) -> None:
+        flattened_pixels = pixels.flatten()
+
         float_pixels = [
             map_value(p, self.MINTEMP, self.MAXTEMP, 0, self.COLORDEPTH - 1)
-            for p in pixels
+            for p in flattened_pixels
         ]
 
         # Rotate 90° to orient for mounting correctly
@@ -455,18 +457,20 @@ class ThermalViewControlWidget(BaseTabWidget):
         self.temp_max_line_edit.setText(str(self.viewer.MAXTEMP))
 
     def process_thermal_reading(self, payload: AVRThermalReading) -> None:
-        # decode the payload
-        base64Decoded = payload.data.encode("utf-8")
-        asbytes = base64.b64decode(base64Decoded)
-        pixel_ints = list(bytearray(asbytes))
+        pixel_values = deserialize_image(
+            {
+                "data": payload.data,
+                "shape": payload.shape,
+                "compressed": payload.compressed,
+            }
+        )
 
         # find lowest temp
-        lowest = min(pixel_ints)
+        lowest = np.amin(pixel_values)
         self.viewer.last_lowest_temp = lowest
 
         # update the canvase
-        # pixel_ints = data
-        self.viewer.update_canvas(pixel_ints)
+        self.viewer.update_canvas(pixel_values)
 
     def clear(self) -> None:
         self.viewer.canvas.clear()
