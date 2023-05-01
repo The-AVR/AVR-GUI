@@ -19,10 +19,6 @@ class _UserConfig:
         if not os.path.isfile(self.config_file):
             return {}
 
-        # if we have a cached version, return it
-        if self.__file_cache is not None:
-            return self.__file_cache
-
         try:
             with open(self.config_file, "r") as fp:
                 data = json.load(fp)
@@ -31,7 +27,6 @@ class _UserConfig:
             if not isinstance(data, dict):
                 raise ValueError
 
-            self.__file_cache = data
             return data
 
         except (json.JSONDecodeError, ValueError):
@@ -40,8 +35,6 @@ class _UserConfig:
             return {}
 
     def __write(self, data: dict) -> None:
-        self.__file_cache = data
-
         with open(self.config_file, "w") as fp:
             json.dump(data, fp, indent=4)
 
