@@ -1,6 +1,4 @@
-import base64
 import math
-from typing import List
 
 import numpy as np
 from bell.avr.mqtt.payloads import (
@@ -8,6 +6,7 @@ from bell.avr.mqtt.payloads import (
     AVRPCMServoPercent,
     AVRThermalReading,
 )
+from bell.avr.utils.images import deserialize_image
 from bell.avr.utils.timing import rate_limit
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -81,14 +80,13 @@ class ThermalView(QtWidgets.QWidget):
         self.MINTEMP = self.last_lowest_temp
         self.MAXTEMP = self.last_lowest_temp + 15.0
 
-    def update_canvas(self, pixels: List[int]) -> None:
+    def update_canvas(self, pixels: np.ndarray) -> None:
         """
-        Update the thermal view canvas with new data.
+        Update the thermal view canvas with new data. Expects a 2D array.
         """
         # figure out how many pixels the camera has
         # assumed to be square
-        camera_x = int(math.sqrt(len(pixels)))
-        camera_y = camera_x
+        camera_x, camera_y = np.shape(pixels)
         camera_total = camera_x * camera_y
 
         # create list of x/y coordinates from the camera
@@ -108,26 +106,23 @@ class ThermalView(QtWidgets.QWidget):
         canvas_square_width = self.CANVAS_WIDTH / canvas_squares_x
         canvas_square_height = self.CANVAS_HEIGHT / canvas_squares_y
 
+        # Rotate 90° to orient for mounting correctly
+        rotated_pixels = np.rot90(pixels, 1)
+
+        # Flatten the list
+        rotated_pixels_flat = rotated_pixels.flatten()
+
         # for all the incoming pixels, constrian them to our temperature range,
         # and give them a value within our color depth
-        float_pixels = [
+        rotated_pixels_flat_mapped = [
             map_value(p, self.MINTEMP, self.MAXTEMP, 0, self.COLOR_DEPTH - 1)
-            for p in pixels
+            for p in rotated_pixels_flat
         ]
-
-        # reshape flat list into our grid
-        float_pixels_matrix = np.reshape(float_pixels, (camera_x, camera_y))
-
-        # Rotate 90° to orient for mounting correctly
-        float_pixels_matrix = np.rot90(float_pixels_matrix, 1)
-
-        # reflatten the list
-        rotated_float_pixels = float_pixels_matrix.flatten()
 
         # create a cubic interpolation of the pixel data
         bicubic = scipy_interpolate_griddata(
             camera_pixel_coordinates,
-            rotated_float_pixels,
+            rotated_pixels_flat_mapped,
             (grid_x, grid_y),
             method="cubic",
         )
@@ -487,17 +482,19 @@ class ThermalViewControlWidget(BaseTabWidget):
 
     def process_thermal_reading(self, payload: AVRThermalReading) -> None:
         # decode the payload
-        base64_decoded = payload.data.encode("utf-8")
-        asbytes = base64.b64decode(base64_decoded)
-        pixel_ints = list(bytearray(asbytes))
+        image_data = deserialize_image(
+            {
+                "data": payload.data,
+                "shape": payload.shape,
+                "compressed": payload.compressed,
+            }
+        )
 
         # find lowest temp
-        lowest = min(pixel_ints)
-        self.viewer.last_lowest_temp = lowest
+        self.viewer.last_lowest_temp = np.amin(image_data)
 
-        # update the canvase
-        # pixel_ints = data
-        self.viewer.update_canvas(pixel_ints)
+        # update the canvas
+        self.viewer.update_canvas(image_data)
 
     def clear(self) -> None:
         self.viewer.canvas.clear()
