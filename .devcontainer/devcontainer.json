@@ -4,6 +4,7 @@
         "dockerfile": "Dockerfile",
         "context": "../"
     },
+    "postCreateCommand": "python -m poetry install --sync && poetry run pre-commit install --install-hooks",
     "postAttachCommand": "git config gpg.program gpg2",
     "customizations": {
         "vscode": {
