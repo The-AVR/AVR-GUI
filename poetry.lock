@@ -13,13 +13,13 @@ files = [
 
 [[package]]
 name = "bell-avr-libraries"
-version = "0.2.0a2"
+version = "0.2.0a3"
 description = "Common Python libraries used by parts of Bell AVR"
 optional = false
 python-versions = ">=3.8,<3.12"
 files = [
-    {file = "bell_avr_libraries-0.2.0a2-py3-none-any.whl", hash = "sha256:120b4871edf731c19862d11f713600e75719bd0880ec1dbd76c87e56bf501305"},
-    {file = "bell_avr_libraries-0.2.0a2.tar.gz", hash = "sha256:3b309543c0812befe58a556edc1e388636ffca2037f79542430aa346567a2487"},
+    {file = "bell_avr_libraries-0.2.0a3-py3-none-any.whl", hash = "sha256:f043e4f67d31dbb1ca6ccc306e4e78b2b52c3d228a371d8bd598bda11ed33b50"},
+    {file = "bell_avr_libraries-0.2.0a3.tar.gz", hash = "sha256:2aef3ba7c3a4650ed21bc57bb5266c68fec23a7bc1c0ef1cc68777dbeb18a3d7"},
 ]
 
 [package.dependencies]
@@ -818,4 +818,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "9dfdc260201c9fd9ea665c3c6a238e67002d59d423b88fdee82a0ad6734601a5"
+content-hash = "56229f63cb4e6fb6381c17de9db413ff4eaa870ecc3c3c558fca184a6fe37489"
