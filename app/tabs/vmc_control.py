@@ -12,9 +12,8 @@ from app.lib.color_config import (
     BLUE_COLOR,
     GREEN_COLOR,
     RED_COLOR,
-    VMC_CONTROL_SERVO_CLOSED_COLOR,
-    VMC_CONTROL_SERVO_OPEN_COLOR,
     WHITE_COLOR,
+    ColorConfig,
 )
 from app.tabs.base import BaseTabWidget
 
@@ -137,7 +136,7 @@ class VMCControlWidget(BaseTabWidget):
         self.send_message("avr/pcm/servo/open", AVRPCMServo(servo=number))
 
         text = "Opened"
-        color = VMC_CONTROL_SERVO_OPEN_COLOR
+        color = ColorConfig.VMC_CONTROL_SERVO_OPEN_COLOR
         self.servo_labels[number].setText(wrap_text(text, color))
 
     def close_servo(self, number: int) -> None:
@@ -147,7 +146,7 @@ class VMCControlWidget(BaseTabWidget):
         self.send_message("avr/pcm/servo/close", AVRPCMServo(servo=number))
 
         text = "Closed"
-        color = VMC_CONTROL_SERVO_CLOSED_COLOR
+        color = ColorConfig.VMC_CONTROL_SERVO_CLOSED_COLOR
         self.servo_labels[number].setText(wrap_text(text, color))
 
     def open_servo_all(self) -> None:

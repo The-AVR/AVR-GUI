@@ -1,0 +1,24 @@
+{
+    "name": "avr-gui",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "../"
+    },
+    "postCreateCommand": "vtr install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "anseki.vscode-color",
+                "charliermarsh.ruff",
+                "kisstkondoros.vscode-gutter-preview",
+                "mhutchie.git-graph",
+                "ms-azuretools.vscode-docker",
+                "ms-python.black-formatter",
+                "ms-python.python",
+                "njqdev.vscode-python-typehint",
+                "tamasfe.even-better-toml",
+                "Tyriar.luna-paint"
+            ]
+        }
+    }
+}

@@ -12,17 +12,20 @@
     numpy              = "^1.24.2"
     scipy              = "^1.10.1"
     colour             = "^0.1.5"
-    loguru             = "^0.6.0"
-    pyside6-essentials = "^6.4.2"
+    loguru             = "^0.7.0"
+    pyside6-essentials = [
+        # dark mode is buggy on linux with 6.5.0
+        {version = "<6.5", markers = "sys_platform != 'win32'"},
+        {version = ">=6.5", markers = "sys_platform == 'win32'"}
+    ]
     paho-mqtt          = "^1.6.1"
-    bell-avr-libraries = { extras = ["serial", "qt"], version = "0.2.0a0" }
-    pyinstaller        = "^5.7.0"
-    darkdetect         = "^0.8.0"
-    typeguard          = "^2.13.3"
+    bell-avr-libraries = { extras = ["serial", "qt"], version = "0.2.0a3" }
+    pyinstaller        = "5.11.0"
+    typeguard          = "4.0.0"
 
 [tool.poetry.group.dev.dependencies]
-    pre-commit = "^3.1.1"
-    pytest-cov = "^4.0.0"
+    pre-commit = "3.3.2"
+    pytest-cov = "4.1.0"
     pytest     = "^7.2.1"
 
 [tool.pyright]

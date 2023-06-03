@@ -1,7 +1,4 @@
-import base64
 import math
-from enum import Enum, auto
-from typing import List, Optional, Tuple
 
 import numpy as np
 from bell.avr.mqtt.payloads import (
@@ -9,6 +6,7 @@ from bell.avr.mqtt.payloads import (
     AVRPCMServoPercent,
     AVRThermalReading,
 )
+from bell.avr.utils.images import deserialize_image
 from bell.avr.utils.timing import rate_limit
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -17,22 +15,10 @@ from scipy.interpolate import griddata as scipy_interpolate_griddata
 
 from app.lib.calc import constrain, map_value
 from app.lib.color import wrap_text
-from app.lib.color_config import (
-    THERMAL_VIEW_CONTROL_LASER_OFF,
-    THERMAL_VIEW_CONTROL_LASER_ON,
-    THERMAL_VIEW_CONTROL_MAX_COLOR,
-    THERMAL_VIEW_CONTROL_MIN_COLOR,
-)
+from app.lib.color_config import ColorConfig
 from app.lib.user_config import UserConfig
 from app.lib.widgets import DoubleLineEdit
 from app.tabs.base import BaseTabWidget
-
-
-class Direction(Enum):
-    Left = auto()
-    Right = auto()
-    Up = auto()
-    Down = auto()
 
 
 class ThermalView(QtWidgets.QWidget):
@@ -40,53 +26,32 @@ class ThermalView(QtWidgets.QWidget):
         super().__init__(parent)
 
         # canvas size
-        self.width_ = 300
-        self.height_ = self.width_
-
-        # pixels within canvas
-        self.pixels_x = 30
-        self.pixels_y = self.pixels_x
-
-        self.pixel_width = self.width_ / self.pixels_x
-        self.pixel_height = self.height_ / self.pixels_y
+        self.CANVAS_WIDTH = 300
+        self.CANVAS_HEIGHT = self.CANVAS_WIDTH
 
         # low range of the sensor (this will be blue on the screen)
+        # this is a default value
         self.MINTEMP = 20.0
 
         # high range of the sensor (this will be red on the screen)
+        # this is a default value
         self.MAXTEMP = 32.0
 
-        # last lowest temp from camera
-        self.last_lowest_temp = 999.0
-
         # how many color values we can have
-        self.COLORDEPTH = 1024
+        self.COLOR_DEPTH = 1024
 
-        # how many pixels the camera is
-        self.camera_x = 8
-        self.camera_y = self.camera_x
-        self.camera_total = self.camera_x * self.camera_y
-
-        # create list of x/y points
-        self.points = [
-            (math.floor(ix / self.camera_x), (ix % self.camera_y))
-            for ix in range(self.camera_total)
-        ]
-        # i'm not fully sure what this does
-        self.grid_x, self.grid_y = np.mgrid[
-            0 : self.camera_x - 1 : self.camera_total / 2j,
-            0 : self.camera_y - 1 : self.camera_total / 2j,
-        ]
-
-        # create avaiable colors
-        self.colors = [
-            (int(c.red * 255), int(c.green * 255), int(c.blue * 255))
+        # create available colors
+        self.COLOR_PALETTE = [
+            c.rgb_255
             for c in list(
-                THERMAL_VIEW_CONTROL_MIN_COLOR.range_to(
-                    THERMAL_VIEW_CONTROL_MAX_COLOR, self.COLORDEPTH
+                ColorConfig.THERMAL_VIEW_CONTROL_MIN_COLOR.range_to(
+                    ColorConfig.THERMAL_VIEW_CONTROL_MAX_COLOR, self.COLOR_DEPTH
                 )
             )
         ]
+
+        # last lowest temp from camera
+        self.last_lowest_temp = 999.0
 
         # create canvas
         layout = QtWidgets.QVBoxLayout()
@@ -94,54 +59,92 @@ class ThermalView(QtWidgets.QWidget):
 
         self.canvas = QtWidgets.QGraphicsScene()
         self.view = QtWidgets.QGraphicsView(self.canvas)
-        self.view.setGeometry(0, 0, self.width_, self.height_)
+        self.view.setGeometry(0, 0, self.CANVAS_WIDTH, self.CANVAS_HEIGHT)
 
         layout.addWidget(self.view)
 
         # need a bit of padding for the edges of the canvas
-        self.setFixedSize(self.width_ + 50, self.height_ + 50)
+        self.setFixedSize(self.CANVAS_WIDTH + 50, self.CANVAS_HEIGHT + 50)
 
     def set_temp_range(self, mintemp: float, maxtemp: float) -> None:
+        """
+        Set the temperature range for the viewer.
+        """
         self.MINTEMP = mintemp
         self.MAXTEMP = maxtemp
 
-    def set_calibrted_temp_range(self) -> None:
-        self.MINTEMP = self.last_lowest_temp + 0.0
+    def set_calibrated_temp_range(self) -> None:
+        """
+        Calibrate the temperature range based on the lowest observed value.
+        """
+        self.MINTEMP = self.last_lowest_temp
         self.MAXTEMP = self.last_lowest_temp + 15.0
 
-    def update_canvas(self, pixels: List[int]) -> None:
-        float_pixels = [
-            map_value(p, self.MINTEMP, self.MAXTEMP, 0, self.COLORDEPTH - 1)
-            for p in pixels
+    def update_canvas(self, pixels: np.ndarray) -> None:
+        """
+        Update the thermal view canvas with new data. Expects a 2D array.
+        """
+        # figure out how many pixels the camera has
+        # assumed to be square
+        camera_x, camera_y = np.shape(pixels)
+        camera_total = camera_x * camera_y
+
+        # create list of x/y coordinates from the camera
+        camera_pixel_coordinates = [
+            (math.floor(ix / camera_x), (ix % camera_y)) for ix in range(camera_total)
         ]
 
-        # Rotate 90° to orient for mounting correctly
-        float_pixels_matrix = np.reshape(float_pixels, (self.camera_x, self.camera_y))
-        float_pixels_matrix = np.rot90(float_pixels_matrix, 1)
-        rotated_float_pixels = float_pixels_matrix.flatten()
+        # magic
+        grid_x, grid_y = np.mgrid[
+            0 : camera_x - 1 : camera_total / 2j,
+            0 : camera_y - 1 : camera_total / 2j,
+        ]
 
+        # figure out how big the squares on the canvas now are
+        # grid_x and grid_y shape are the same
+        canvas_squares_x, canvas_squares_y = np.shape(grid_x)
+        canvas_square_width = self.CANVAS_WIDTH / canvas_squares_x
+        canvas_square_height = self.CANVAS_HEIGHT / canvas_squares_y
+
+        # Rotate 90° to orient for mounting correctly
+        rotated_pixels = np.rot90(pixels, 1)
+
+        # Flatten the list
+        rotated_pixels_flat = rotated_pixels.flatten()
+
+        # for all the incoming pixels, constrian them to our temperature range,
+        # and give them a value within our color depth
+        rotated_pixels_flat_mapped = [
+            map_value(p, self.MINTEMP, self.MAXTEMP, 0, self.COLOR_DEPTH - 1)
+            for p in rotated_pixels_flat
+        ]
+
+        # create a cubic interpolation of the pixel data
         bicubic = scipy_interpolate_griddata(
-            self.points,
-            rotated_float_pixels,
-            (self.grid_x, self.grid_y),
+            camera_pixel_coordinates,
+            rotated_pixels_flat_mapped,
+            (grid_x, grid_y),
             method="cubic",
         )
 
+        # draw on the canvas
         pen = QtGui.QPen(QtCore.Qt.PenStyle.NoPen)
         self.canvas.clear()
 
         for ix, row in enumerate(bicubic):
-            for jx, pixel in enumerate(row):
-                brush = QtGui.QBrush(
-                    QtGui.QColor(
-                        *self.colors[int(constrain(pixel, 0, self.COLORDEPTH - 1))]
-                    )
-                )
+            for jx, square in enumerate(row):
+                # constrain the value of the square to our color depth
+                square_value = int(constrain(square, 0, self.COLOR_DEPTH - 1))
+                # create a QColor object for it
+                qcolor = QtGui.QColor(*self.COLOR_PALETTE[square_value])
+                # create the brush
+                brush = QtGui.QBrush(qcolor)
+                # add the rectangle
                 self.canvas.addRect(
-                    self.pixel_width * jx,
-                    self.pixel_height * ix,
-                    self.pixel_width,
-                    self.pixel_height,
+                    canvas_square_width * jx,
+                    canvas_square_height * ix,
+                    canvas_square_width,
+                    canvas_square_height,
                     pen,
                     brush,
                 )
@@ -151,22 +154,32 @@ class JoystickWidget(BaseTabWidget):
     def __init__(self, parent: QtWidgets.QWidget) -> None:
         super().__init__(parent)
 
-        self.setFixedSize(300, 300)
+        # dimensions of the bounding box, and joystick
+        self.BOUNDING_BOX_WIDTH = 200
+        self.BOUNDING_BOX_HEIGHT = 200
+        self.JOYSTICK_RADIUS = 20
 
-        self.moving_offset = QtCore.QPointF(0, 0)
+        # add an extra amount so things are clipping at the edge
+        self.WIDTH = round(self.BOUNDING_BOX_WIDTH * 1.5)
+        self.HEIGHT = round(self.BOUNDING_BOX_HEIGHT * 1.5)
 
-        self.grab_center = False
-        self.__max_distance = 100
+        self.setFixedSize(self.WIDTH, self.HEIGHT)
 
-        self.current_y = 0
-        self.current_x = 0
+        # calculate edges of bounding box
+        self.BOUNDING_BOX_MIN_X = int(self._center().x() - self.BOUNDING_BOX_WIDTH / 2)
+        self.BOUNDING_BOX_MAX_X = int(self._center().x() + self.BOUNDING_BOX_WIDTH / 2)
+        self.BOUNDING_BOX_MIN_Y = int(self._center().y() - self.BOUNDING_BOX_HEIGHT / 2)
+        self.BOUNDING_BOX_MAX_Y = int(self._center().y() + self.BOUNDING_BOX_HEIGHT / 2)
 
-        self.servoxmin = 10
-        self.servoymin = 10
-        self.servoxmax = 99
-        self.servoymax = 99
+        # absolute position within the widget of where the joystick is
+        self.joystick_center_abs = QtCore.QPointF(0, 0)
+        # relative position within the widget of where the joystick is
+        self.joystick_center_rel = QtCore.QPointF(0, 0)
 
-        # servo declarations
+        # record if joystick was grabbed
+        self.joystick_grabbed = False
+
+        # servo values
         self.SERVO_ABS_MAX = 2200
         self.SERVO_ABS_MIN = 700
 
@@ -200,124 +213,115 @@ class JoystickWidget(BaseTabWidget):
         """
         Update the servos on joystick movement.
         """
-        # y_reversed = 100 - self.current_y
-
-        # x_servo_percent = round(map_value(self.current_x, 0, 100, 10, 99))
-        # y_servo_percent = round(map_value(y_reversed, 0, 100, 10, 99))
-        #
-        # if x_servo_percent < self.servoxmin:
-        #     return
-        # if y_servo_percent < self.servoymin:
-        #     return
-        # if x_servo_percent > self.servoxmax:
-        #     return
-        # if y_servo_percent > self.servoymax:
-        #     return
-        #
-        # self.move_gimbal(x_servo_percent, y_servo_percent)
-
-        y_reversed = 225 - self.current_y
-        # side to side  270 left, 360 right
-
         x_servo_abs = round(
             map_value(
-                self.current_x + 25, 25, 225, self.SERVO_ABS_MIN, self.SERVO_ABS_MAX
+                self.joystick_center_rel.x(),
+                0,
+                self.BOUNDING_BOX_WIDTH,
+                self.SERVO_ABS_MIN,
+                self.SERVO_ABS_MAX,
             )
         )
         y_servo_abs = round(
-            map_value(y_reversed, 25, 225, self.SERVO_ABS_MIN, self.SERVO_ABS_MAX)
+            map_value(
+                self.joystick_center_rel.y(),
+                0,
+                self.BOUNDING_BOX_HEIGHT,
+                self.SERVO_ABS_MIN,
+                self.SERVO_ABS_MAX,
+            )
         )
 
         self.move_gimbal_absolute(x_servo_abs, y_servo_abs)
 
-    def _center_ellipse(self) -> QtCore.QRectF:
+    def _joystick_rect(self) -> QtCore.QRectF:
+        """
+        Return the rectangle representing the edges of the joystick.
+        """
         # sourcery skip: assign-if-exp
-        if self.grab_center:
-            center = self.moving_offset
+        if self.joystick_grabbed:
+            # if the joystick was grabbed, the center is now it's current position
+            center = self.joystick_center_abs
         else:
+            # otherwise, re-center i
             center = self._center()
 
-        return QtCore.QRectF(-20, -20, 40, 40).translated(center)
+        return QtCore.QRectF(
+            -self.JOYSTICK_RADIUS,
+            -self.JOYSTICK_RADIUS,
+            2 * self.JOYSTICK_RADIUS,
+            2 * self.JOYSTICK_RADIUS,
+        ).translated(center)
 
     def _bound_joystick(self, point: QtCore.QPoint) -> QtCore.QPoint:
         """
         If the joystick is leaving the widget, bound it to the edge of the widget.
         """
-        if point.x() > (self._center().x() + self.__max_distance):
-            point.setX(int(self._center().x() + self.__max_distance))
-        elif point.x() < (self._center().x() - self.__max_distance):
-            point.setX(int(self._center().x() - self.__max_distance))
+        if point.x() > (self.BOUNDING_BOX_MAX_X):
+            point.setX(self.BOUNDING_BOX_MAX_X)
+        elif point.x() < (self.BOUNDING_BOX_MIN_X):
+            point.setX(self.BOUNDING_BOX_MIN_X)
 
-        if point.y() > (self._center().y() + self.__max_distance):
-            point.setY(int(self._center().y() + self.__max_distance))
-        elif point.y() < (self._center().y() - self.__max_distance):
-            point.setY(int(self._center().y() - self.__max_distance))
+        if point.y() > (self.BOUNDING_BOX_MAX_Y):
+            point.setY(self.BOUNDING_BOX_MAX_Y)
+        elif point.y() < (self.BOUNDING_BOX_MIN_Y):
+            point.setY(self.BOUNDING_BOX_MIN_Y)
+
         return point
-
-    def joystick_direction(self) -> Optional[Tuple[Direction, float]]:
-        """
-        Retrieve the direction the joystick is moving
-        """
-        if not self.grab_center:
-            return None
-
-        norm_vector = QtCore.QLineF(self._center(), self.moving_offset)
-        current_distance = norm_vector.length()
-        angle = norm_vector.angle()
-
-        distance = min(current_distance / self.__max_distance, 1.0)
-
-        if 45 <= angle < 135:
-            return (Direction.Up, distance)
-        elif 135 <= angle < 225:
-            return (Direction.Left, distance)
-        elif 225 <= angle < 315:
-            return (Direction.Down, distance)
-
-        return (Direction.Right, distance)
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
         painter = QtGui.QPainter(self)
+
+        # draw the bounding box
         bounds = QtCore.QRectF(
-            -self.__max_distance,
-            -self.__max_distance,
-            self.__max_distance * 2,
-            self.__max_distance * 2,
-        ).translated(self._center())
-
-        # painter.drawEllipse(bounds)
+            self.BOUNDING_BOX_MIN_X,
+            self.BOUNDING_BOX_MIN_Y,
+            self.BOUNDING_BOX_WIDTH,
+            self.BOUNDING_BOX_HEIGHT,
+        )
         painter.drawRect(bounds)
-        painter.setBrush(QtCore.Qt.GlobalColor.black)
 
-        painter.drawEllipse(self._center_ellipse())
+        # draw the joystick
+        painter.setBrush(QtCore.Qt.GlobalColor.black)
+        painter.drawEllipse(self._joystick_rect())
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> QtGui.QMouseEvent:
         """
-        On a mouse press, check if we've clicked on the center of the joystick.
+        On a mouse press, check if we've clicked on the joystick.
         """
-        self.grab_center = self._center_ellipse().contains(event.pos())
+        self.joystick_grabbed = self._joystick_rect().contains(event.pos())
         return event
 
     def mouseReleaseEvent(self, event: QtCore.QEvent) -> None:
-        # self.grab_center = False
-        # self.moving_offset = QtCore.QPointF(0, 0)
+        """
+        When the mouse is released, update the joystick position. This is
+        for when the center is clicked, and not the joystick itself.
+        """
+        # trigger a repaint
         self.update()
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
-        if self.grab_center:
-            self.moving_offset = self._bound_joystick(event.pos())
+        """
+        Process a mouse move event.
+        """
+        if self.joystick_grabbed:
+            self.joystick_center_abs = self._bound_joystick(event.pos())
+            # trigger a repaint
             self.update()
 
-        moving_offset_y = self.moving_offset.y()
-        if not UserConfig.joystick_inverted:
-            moving_offset_y = self.height() - moving_offset_y
+        joystick_center_abs_y = self.joystick_center_abs.y()
+        if UserConfig.joystick_inverted:
+            joystick_center_abs_y = self.height() - joystick_center_abs_y
 
-        # print(self.joystick_direction())
-        self.current_x = (
-            self.moving_offset.x() - self._center().x() + self.__max_distance
+        # set the current relative position
+        self.joystick_center_rel = QtCore.QPointF(
+            self.joystick_center_abs.x()
+            - self._center().x()
+            + self.BOUNDING_BOX_WIDTH / 2,
+            joystick_center_abs_y - self._center().y() + self.BOUNDING_BOX_HEIGHT / 2,
         )
-        self.current_y = moving_offset_y - self._center().y() + self.__max_distance
 
+        # update servos
         rate_limit(self.update_servos, frequency=50)
 
 
@@ -335,6 +339,7 @@ class ThermalViewControlWidget(BaseTabWidget):
         """
         layout = QtWidgets.QHBoxLayout(self)
         layout_splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
+        layout.addWidget(layout_splitter)
         self.setLayout(layout)
 
         # viewer
@@ -342,12 +347,14 @@ class ThermalViewControlWidget(BaseTabWidget):
         viewer_layout = QtWidgets.QVBoxLayout()
         viewer_groupbox.setLayout(viewer_layout)
 
+        # this sub layout is used to keep the viewer centered in the column
+        sub_viewer_layout = QtWidgets.QHBoxLayout()
         self.viewer = ThermalView(self)
-        viewer_layout.addWidget(self.viewer)
+        sub_viewer_layout.addWidget(self.viewer)
+        viewer_layout.addLayout(sub_viewer_layout)
 
         # set temp range
 
-        # lay out the host label and line edit
         temp_range_layout = QtWidgets.QFormLayout()
 
         self.temp_min_line_edit = DoubleLineEdit()
@@ -358,42 +365,50 @@ class ThermalViewControlWidget(BaseTabWidget):
         temp_range_layout.addRow(QtWidgets.QLabel("Max Temp:"), self.temp_max_line_edit)
         self.temp_max_line_edit.setText(str(self.viewer.MAXTEMP))
 
+        viewer_layout.addLayout(temp_range_layout)
+
+        button_layout = QtWidgets.QVBoxLayout()
         set_temp_range_button = QtWidgets.QPushButton("Set Temp Range")
-        temp_range_layout.addWidget(set_temp_range_button)
+        button_layout.addWidget(set_temp_range_button)
 
         set_temp_range_calibrate_button = QtWidgets.QPushButton(
             "Auto Calibrate Temp Range"
         )
-        temp_range_layout.addWidget(set_temp_range_calibrate_button)
-
-        viewer_layout.addLayout(temp_range_layout)
-
-        set_temp_range_button.clicked.connect(  # type: ignore
-            lambda: self.viewer.set_temp_range(
-                float(self.temp_min_line_edit.text()),
-                float(self.temp_max_line_edit.text()),
-            )
-        )
-
-        set_temp_range_calibrate_button.clicked.connect(  # type: ignore
-            lambda: self.calibrate_temp()
-        )
+        button_layout.addWidget(set_temp_range_calibrate_button)
+        viewer_layout.addLayout(button_layout)
 
         layout_splitter.addWidget(viewer_groupbox)
+
+        right_side_widget = QtWidgets.QWidget()
+        right_side_layout = QtWidgets.QVBoxLayout()
+        right_side_widget.setLayout(right_side_layout)
 
         # joystick
         joystick_groupbox = QtWidgets.QGroupBox("Joystick")
         joystick_layout = QtWidgets.QVBoxLayout()
         joystick_groupbox.setLayout(joystick_layout)
 
+        # this hbox is used to keep the joystick centered in the column
         sub_joystick_layout = QtWidgets.QHBoxLayout()
         joystick_layout.addLayout(sub_joystick_layout)
 
-        self.joystick = JoystickWidget(self)
-        sub_joystick_layout.addWidget(self.joystick)
+        joystick = JoystickWidget(self)
+        sub_joystick_layout.addWidget(joystick)
+
+        # https://i.imgur.com/yvgNiFE.jpg
+        self.joystick_inverted_checkbox = QtWidgets.QCheckBox("Invert Joystick")
+        joystick_layout.addWidget(self.joystick_inverted_checkbox)
+        self.joystick_inverted_checkbox.setChecked(UserConfig.joystick_inverted)
+
+        right_side_layout.addWidget(joystick_groupbox)
+
+        # laser
+        laser_groupbox = QtWidgets.QGroupBox("Laser")
+        laser_layout = QtWidgets.QVBoxLayout()
+        laser_groupbox.setLayout(laser_layout)
 
         fire_laser_button = QtWidgets.QPushButton("Fire Laser")
-        joystick_layout.addWidget(fire_laser_button)
+        laser_layout.addWidget(fire_laser_button)
 
         laser_toggle_layout = QtWidgets.QHBoxLayout()
 
@@ -408,19 +423,25 @@ class ThermalViewControlWidget(BaseTabWidget):
             QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
         laser_toggle_layout.addWidget(self.laser_toggle_label)
+        laser_layout.addLayout(laser_toggle_layout)
 
-        joystick_layout.addLayout(laser_toggle_layout)
+        right_side_layout.addWidget(laser_groupbox)
 
-        # https://i.imgur.com/yvgNiFE.jpg
-        self.joystick_inverted_checkbox = QtWidgets.QCheckBox("Invert Joystick")
-        joystick_layout.addWidget(self.joystick_inverted_checkbox)
-        self.joystick_inverted_checkbox.setChecked(UserConfig.joystick_inverted)
-
-        layout_splitter.addWidget(joystick_groupbox)
-        layout.addWidget(layout_splitter)
+        layout_splitter.addWidget(right_side_widget)
 
         # connect signals
-        self.joystick.send_message_signal.connect(self.send_message_signal.emit)
+        set_temp_range_button.clicked.connect(  # type: ignore
+            lambda: self.viewer.set_temp_range(
+                float(self.temp_min_line_edit.text()),
+                float(self.temp_max_line_edit.text()),
+            )
+        )
+
+        set_temp_range_calibrate_button.clicked.connect(  # type: ignore
+            lambda: self.calibrate_temp()
+        )
+
+        joystick.send_message_signal.connect(self.send_message_signal.emit)
 
         fire_laser_button.clicked.connect(  # type: ignore
             lambda: self.send_message("avr/pcm/laser/fire")
@@ -442,36 +463,32 @@ class ThermalViewControlWidget(BaseTabWidget):
 
     def laser_on(self) -> None:
         text = "Laser On"
-        color = THERMAL_VIEW_CONTROL_LASER_ON
+        color = ColorConfig.THERMAL_VIEW_CONTROL_LASER_ON
 
         self.send_message("avr/pcm/laser/on")
         self.laser_toggle_label.setText(wrap_text(text, color))
 
     def laser_off(self) -> None:
         text = "Laser Off"
-        color = THERMAL_VIEW_CONTROL_LASER_OFF
+        color = ColorConfig.THERMAL_VIEW_CONTROL_LASER_OFF
 
         self.send_message("avr/pcm/laser/off")
         self.laser_toggle_label.setText(wrap_text(text, color))
 
     def calibrate_temp(self) -> None:
-        self.viewer.set_calibrted_temp_range()
+        self.viewer.set_calibrated_temp_range()
         self.temp_min_line_edit.setText(str(self.viewer.MINTEMP))
         self.temp_max_line_edit.setText(str(self.viewer.MAXTEMP))
 
     def process_thermal_reading(self, payload: AVRThermalReading) -> None:
         # decode the payload
-        base64Decoded = payload.data.encode("utf-8")
-        asbytes = base64.b64decode(base64Decoded)
-        pixel_ints = list(bytearray(asbytes))
+        image_data = deserialize_image(payload)
 
         # find lowest temp
-        lowest = min(pixel_ints)
-        self.viewer.last_lowest_temp = lowest
+        self.viewer.last_lowest_temp = np.amin(image_data)
 
-        # update the canvase
-        # pixel_ints = data
-        self.viewer.update_canvas(pixel_ints)
+        # update the canvas
+        self.viewer.update_canvas(image_data)
 
     def clear(self) -> None:
         self.viewer.canvas.clear()

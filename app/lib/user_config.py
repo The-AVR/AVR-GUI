@@ -1,7 +1,7 @@
 import contextlib
 import json
 import os
-from typing import Any, Literal
+from typing import Any, Optional
 
 import typeguard
 
@@ -11,7 +11,11 @@ from app.lib.directory_config import ROOT_DIR
 class _UserConfig:
     config_file = os.path.join(ROOT_DIR, "settings.json")
 
+    def __init__(self):
+        self.__file_cache: Optional[dict] = None
+
     def __read(self) -> dict:
+        # if the file does not exist, return an empty dict
         if not os.path.isfile(self.config_file):
             return {}
 
@@ -42,10 +46,10 @@ class _UserConfig:
         if key in data:
             value = data[key]
 
-            with contextlib.suppress(TypeError):
+            with contextlib.suppress(typeguard.TypeCheckError):
                 # make sure the value is of the correct type
                 # otherwise, return the default
-                typeguard.check_type(key, value, type_hint)
+                typeguard.check_type(value, type_hint)
                 return value
 
         # if we have a set default value that is not None, write it out
@@ -100,20 +104,24 @@ class _UserConfig:
         return self.__set("log_file_directory", value)
 
     @property
+    def force_light_mode(self) -> bool:
+        """
+        Allow the use to force the application to light mode.
+        This only works on Windows.
+        """
+        return self.__get("force_light_mode", bool, False)
+
+    @force_light_mode.setter
+    def force_light_mode(self, value: bool) -> None:
+        return self.__set("force_light_mode", value)
+
+    @property
     def joystick_inverted(self) -> bool:
         return self.__get("joystick_inverted", bool, False)
 
     @joystick_inverted.setter
     def joystick_inverted(self, value: bool) -> None:
         return self.__set("joystick_inverted", value)
-
-    @property
-    def force_color_mode(self) -> Literal["dark", "light", None]:
-        return self.__get("force_color_mode", Literal["dark", "light", None], None)
-
-    @force_color_mode.setter
-    def force_color_mode(self, value: Literal["dark", "light", None]) -> None:
-        return self.__set("force_color_mode", value)
 
 
 UserConfig = _UserConfig()

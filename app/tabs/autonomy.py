@@ -10,12 +10,7 @@ from bell.avr.mqtt.payloads import (
 from PySide6 import QtCore, QtWidgets
 
 from app.lib.color import wrap_text
-from app.lib.color_config import (
-    AUTONOMY_AUTONOMOUS_DISABLED_COLOR,
-    AUTONOMY_AUTONOMOUS_ENABLED_COLOR,
-    AUTONOMY_DROP_DISABLED_COLOR,
-    AUTONOMY_DROP_ENABLED_COLOR,
-)
+from app.lib.color_config import ColorConfig
 from app.tabs.base import BaseTabWidget
 
 
@@ -110,7 +105,7 @@ class AutonomyWidget(BaseTabWidget):
         )
 
         text = "Drop Enabled"
-        color = AUTONOMY_DROP_ENABLED_COLOR
+        color = ColorConfig.AUTONOMY_DROP_ENABLED_COLOR
         self.building_labels[number].setText(wrap_text(text, color))
 
     def disable_building_drop(self, number: int) -> None:
@@ -123,7 +118,7 @@ class AutonomyWidget(BaseTabWidget):
         )
 
         text = "Drop Disabled"
-        color = AUTONOMY_DROP_DISABLED_COLOR
+        color = ColorConfig.AUTONOMY_DROP_DISABLED_COLOR
         self.building_labels[number].setText(wrap_text(text, color))
 
     def enable_building_drop_all(self) -> None:
@@ -147,7 +142,7 @@ class AutonomyWidget(BaseTabWidget):
         self.send_message("avr/autonomous/enable")
 
         text = "Autonomous Enabled"
-        color = AUTONOMY_AUTONOMOUS_ENABLED_COLOR
+        color = ColorConfig.AUTONOMY_AUTONOMOUS_ENABLED_COLOR
         self.autonomous_label.setText(wrap_text(text, color))
 
     def disable_autonomous(self) -> None:
@@ -157,5 +152,5 @@ class AutonomyWidget(BaseTabWidget):
         self.send_message("avr/autonomous/disable")
 
         text = "Autonomous Disabled"
-        color = AUTONOMY_AUTONOMOUS_DISABLED_COLOR
+        color = ColorConfig.AUTONOMY_AUTONOMOUS_DISABLED_COLOR
         self.autonomous_label.setText(wrap_text(text, color))
