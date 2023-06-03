@@ -19,12 +19,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Cache Pipx
+      - name: Cache Python Packages
         uses: actions/cache@v3
         with:
-          path: ~/.local/pipx/venvs
-          key: pipx-venv-${{ hashFiles('pyproject.toml') }}
-          restore-keys: pipx-venv
+          path: |
+            ~/.config/pypoetry
+            ~/.cache/pip
+          key: python-pkgs-${{ hashFiles('pyproject.toml') }}
+          restore-keys: python-pkgs
 
       - name: Install poetry/vscode-task-runner
         run: |
