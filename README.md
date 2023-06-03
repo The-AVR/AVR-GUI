@@ -9,12 +9,14 @@ It's assumed you have a version of Python installed from
 [python.org](https://python.org) that is the same or newer as
 defined in [`.python-version`](.python-version).
 
-First, install [Poetry](https://python-poetry.org/):
+First, install [Poetry](https://python-poetry.org/) and
+[VS Code Task Runner](https://pypi.org/project/vscode-task-runner/):
 
 ```bash
 python -m pip install pipx --upgrade
 pipx ensurepath
 pipx install poetry
+pipx install vscode-task-runner
 # (Optionally) Add pre-commit plugin
 poetry self add poetry-pre-commit-plugin
 ```
@@ -24,8 +26,7 @@ Now, you can clone the repo and install dependencies:
 ```bash
 git clone https://github.com/bellflight/AVR-GUI
 cd AVR-GUI
-poetry install --sync
-poetry run pre-commit install --install-hooks
+vtr install
 ```
 
 Run
@@ -40,6 +41,12 @@ To start the GUI, launch the `app.py` file:
 
 ```bash
 python app.py
+```
+
+or run
+
+```bash
+vrt app
 ```
 
 ## Usage
@@ -121,20 +128,8 @@ presets (red, green, blue). The "clear" button at the bottom turns off the LEDs.
 #### Autonomous Enable
 
 The "Autonomous" buttons in the tab, this is purely optional for the teams that have
-chosen to write autonomous code. These buttons send a message to the MQTT topic
-`avr/autonomous` with a payload of:
-
-```json
-// enable button
-{
-    "enable": true,
-}
-
-// disable button
-{
-    "enable": false,
-}
-```
+chosen to write autonomous code. These buttons send an empty message one of two MQTT
+topics `avr/autonomous/enable` or `avr/autonomous/disable`.
 
 For any teams writing their own autonomous code, they can write a listener
 for this topic to enable/disable their autonomous code at certain points, rather
@@ -143,18 +138,23 @@ than have it run continuously the entire time.
 Example implementation:
 
 ```python
-from bell.avr.mqtt.client import MQTTModule
-from bell.avr.mqtt.payloads import AvrAutonomousPayload
+from bell.avr.mqtt.module import MQTTModule
 
 class Sandbox(MQTTModule):
     def __init__(self) -> None:
         self.enabled = False
-        self.topic_map = {"avr/autonomous": self.on_autonomous_message}
+        self.topic_map = {
+            "avr/autonomous/enable": self.on_autonomous_message_enable,
+            "avr/autonomous/disable": self.on_autonomous_message_disable
+        }
 
     ...
 
-    def on_autonomous_message(self, payload: AvrAutonomousPayload) -> None:
-        self.enabled = payload["enable"]
+    def on_autonomous_message_enable(self) -> None:
+        self.enabled = True
+
+    def on_autonomous_message_disable(self) -> None:
+        self.enabled = False
 
     def autonomous_code(self) -> None:
         while self.enabled:
@@ -163,22 +163,22 @@ class Sandbox(MQTTModule):
 
 #### Building Autonomous Enable Drop
 
-Additionally, buttons for enabling/disabling autonomous water drops are
-provided on this page. These buttons send a message to the MQTT topic
-`avr/autonomous/building/drop` with a payload of:
+Additionally, the buttons for enabling/disabling autonomous water drops are
+provided on this page. These buttons send a message to one of the two MQTT
+topics `avr/autonomous/building/enable` or `avr/autonomous/building/disable`
+with a payload containing the target building ID:
 
 ```json
 {
-  "id": 0,
-  "enabled": true
+    "building": 0
 }
 ```
 
-This message can be used to tell you drone what buildings are on fire and
+These messages can be used to tell the drone what buildings are on fire and
 if you want to drop water on it or not. For a full list of which buildings
 have water drops please refer to the game manual. The activity of using the
-`avr/autonomous/building/drop` will be implemented by the students in the
-sandbox module. [Hint: the above example can also be used in this scenario]
+`avr/autonomous/building/enable` or `disable` will be implemented by the students
+in the sandbox module. [Hint: the above example can also be used in this scenario]
 
 ### Thermal View/Control
 

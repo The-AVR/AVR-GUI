@@ -1,0 +1,39 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "poetry run python build.py",
+            "dependsOn": ["install-main"]
+        },
+        {
+            "label": "pre-commit",
+            "type": "shell",
+            "command": "poetry run pre-commit run --all-files",
+            "dependsOn": [
+                "install"
+            ]
+        },
+        {
+            "label": "install",
+            "command": "poetry install --sync",
+            "type": "shell"
+        },
+        {
+            "label": "install-main",
+            "command": "poetry install --only main",
+            "type": "shell"
+        },
+        {
+            "label": "tests",
+            "command": "poetry run pytest -v --cov=app/ --cov-report=html",
+            "type": "shell"
+        },
+        {
+            "label": "app",
+            "command": "poetry run python app.py",
+            "type": "shell"
+        }
+    ]
+}
