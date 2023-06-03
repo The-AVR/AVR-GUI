@@ -27,7 +27,7 @@ class MQTTClient(BaseMQTTClient, QtCore.QObject):
     on_message_signal: QtCore.SignalInstance = QtCore.Signal(str, bytes)  # type: ignore
 
     def __init__(self) -> None:
-        super().__init__()
+        super(BaseMQTTClient, self).__init__()
 
         self.subscribe_to_all_topics = True
         self.enable_verbose_logging = True
