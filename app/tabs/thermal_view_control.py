@@ -482,13 +482,7 @@ class ThermalViewControlWidget(BaseTabWidget):
 
     def process_thermal_reading(self, payload: AVRThermalReading) -> None:
         # decode the payload
-        image_data = deserialize_image(
-            {
-                "data": payload.data,
-                "shape": payload.shape,
-                "compressed": payload.compressed,
-            }
-        )
+        image_data = deserialize_image(payload)
 
         # find lowest temp
         self.viewer.last_lowest_temp = np.amin(image_data)
