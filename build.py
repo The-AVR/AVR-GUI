@@ -25,7 +25,7 @@ def main(version: str) -> None:
     subprocess.check_call(cmd, cwd=THIS_DIR)
 
     # rename executable when running in CI
-    if os.environ["CI"] == "true":
+    if os.getenv("CI") == "true":
         os.rename(
             os.path.join(THIS_DIR, "dist", "AVRGUI.exe"),
             os.path.join(THIS_DIR, "dist", f"AVRGUI.{version}.exe"),
