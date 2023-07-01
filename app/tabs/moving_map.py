@@ -1,6 +1,6 @@
 import math
 import os
-from typing import List, Union
+from typing import Optional
 
 from bell.avr.mqtt.payloads import AVRFCMAttitudeEulerDegrees, AVRFCMPositionLocal
 from PySide6 import QtCore, QtGui, QtSvgWidgets, QtWidgets
@@ -53,8 +53,8 @@ class ResizedQGraphicsSvgItem(QtSvgWidgets.QGraphicsSvgItem):
 class AttitudeIndicator(QtWidgets.QGraphicsView):
     # adapted from https://github.com/UlusoyRobotic/PyQt---Stm32F4-Real-Time-Flight-Data-Pitch-and-Roll-Simulator/blob/6edc80de1f054a8a8bcddc984e3be0b3c73d29cd/qfi/qfi_ADI.py
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: Optional[QtWidgets.QWidget]) -> None:
+        super().__init__(parent)
 
         # maintain persistent values
         self._roll = 0
@@ -202,8 +202,8 @@ class DroneAltitudeWidget(QtWidgets.QWidget):
     CANVAS_HEIGHT = 240
     CANVAS_WIDTH = 120
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: Optional[QtWidgets.QWidget]) -> None:
+        super().__init__(parent)
 
         layout = QtWidgets.QHBoxLayout()
         self.setLayout(layout)
@@ -330,7 +330,7 @@ class InfiniteGridGraphicsScene(QtWidgets.QGraphicsScene):
     LINE_METER_SPACING = 1
 
     def drawBackground(
-        self, painter: QtGui.QPainter, rect: Union[QtCore.QRectF, QtCore.QRect]
+        self, painter: QtGui.QPainter, rect: QtCore.QRectF | QtCore.QRect
     ) -> None:
         """
         Draws a grid within the given viewport.
@@ -361,11 +361,11 @@ class InfiniteGridGraphicsScene(QtWidgets.QGraphicsScene):
 
 
 class MovingMapGraphicsWidget(QtWidgets.QWidget):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: Optional[QtWidgets.QWidget]) -> None:
+        super().__init__(parent)
 
         # record all trails so they can be cleared
-        self._tracks: List[QtWidgets.QGraphicsLineItem] = []
+        self._tracks: list[QtWidgets.QGraphicsLineItem] = []
 
         # =========================
 

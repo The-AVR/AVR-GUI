@@ -5,9 +5,17 @@ updates:
     schedule:
       interval: "monthly"
     target-branch: "develop"
+    groups:
+      all:
+        patterns:
+          - "*"
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "monthly"
     target-branch: "develop"
+    groups:
+      all:
+        patterns:
+          - "*"

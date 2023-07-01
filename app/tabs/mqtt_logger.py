@@ -13,8 +13,8 @@ from app.tabs.base import BaseTabWidget
 
 
 class LogFileViewWidget(QtWidgets.QTreeView):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: Optional[QtWidgets.QWidget]) -> None:
+        super().__init__(parent)
 
         # setting this environment variable will allow the file size to be
         # automatically updated after the file handle is closed

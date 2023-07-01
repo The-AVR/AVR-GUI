@@ -40,7 +40,7 @@ class MQTTClient(BaseMQTTClient, QtCore.QObject):
         """
         self.on_message_signal.emit(msg.topic, msg.payload)
 
-    def on_disconnect(self, *args) -> None:
+    def on_disconnect(self, *args: Any) -> None:
         super().on_disconnect(*args)
         self.connection_state.emit(ConnectionState.disconnected)
 

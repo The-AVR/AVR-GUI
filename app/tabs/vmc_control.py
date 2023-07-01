@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-from typing import List, Tuple
 
 from bell.avr.mqtt.payloads import AVRPCMColorSet, AVRPCMServo
 from PySide6 import QtCore, QtWidgets
@@ -73,7 +72,7 @@ class VMCControlWidget(BaseTabWidget):
         # ==========================
         # Servos
         self.number_of_servos = 4
-        self.servo_labels: List[QtWidgets.QLabel] = []
+        self.servo_labels: list[QtWidgets.QLabel] = []
 
         servos_groupbox = QtWidgets.QGroupBox("Servos")
         servos_layout = QtWidgets.QVBoxLayout()
@@ -163,7 +162,7 @@ class VMCControlWidget(BaseTabWidget):
         for i in range(self.number_of_servos):
             self.close_servo(i)
 
-    def set_led(self, color: Tuple[int, int, int, int]) -> None:
+    def set_led(self, color: tuple[int, int, int, int]) -> None:
         """
         Set LED color
         """

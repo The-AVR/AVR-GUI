@@ -1,5 +1,6 @@
 import argparse
 import sys
+from typing import Optional
 
 from loguru import logger
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -26,8 +27,8 @@ class TabBar(QtWidgets.QTabBar):
 
     pop_out: QtCore.SignalInstance = QtCore.Signal(int)  # type: ignore
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: Optional[QtWidgets.QWidget]) -> None:
+        super().__init__(parent)
 
         self.tabBarDoubleClicked.connect(self.pop_out)  # type: ignore
 
@@ -49,8 +50,8 @@ class TabWidget(QtWidgets.QTabWidget):
     Custom QTabWidget that allows the tab to be popped in/out from an external window.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: Optional[QtWidgets.QWidget]) -> None:
+        super().__init__(parent)
 
         self.tab_bar = TabBar(self)
         self.setTabBar(self.tab_bar)
