@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generator, Tuple
+from typing import Any, Generator
 
 import colour
 
@@ -14,7 +14,7 @@ class Color(colour.Color):
     """
 
     @property
-    def rgb_255(self) -> Tuple[int, int, int]:
+    def rgb_255(self) -> tuple[int, int, int]:
         return tuple(round(i * 255) for i in self.rgb)
 
     def range_to(self, value: Any, steps: int) -> Generator[Color, Any, None]:

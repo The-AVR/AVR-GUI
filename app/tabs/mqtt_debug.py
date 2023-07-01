@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional
 
 import pydantic
 from bell.avr.mqtt.constants import MQTTTopicPayload, MQTTTopics
@@ -29,7 +29,7 @@ def _get_or_create_child(
     return QtWidgets.QTreeWidgetItem(parent, [name])
 
 
-def _get_parents(item: QtWidgets.QTreeWidgetItem) -> List[QtWidgets.QTreeWidgetItem]:
+def _get_parents(item: QtWidgets.QTreeWidgetItem) -> list[QtWidgets.QTreeWidgetItem]:
     """
     Gets a list of parent QTreeWidgetItems of a QTreeWidgetItem.
     The list will be in order from top down, and include the original item.
@@ -336,7 +336,7 @@ class MQTTDebugWidget(BaseTabWidget):
     def set_item_background(
         self,
         item: QtWidgets.QTreeWidgetItem,
-        color: Union[Tuple[int, int, int], QtGui.QColor],
+        color: tuple[int, int, int] | QtGui.QColor,
     ) -> None:
         """
         Set the background color for an item.

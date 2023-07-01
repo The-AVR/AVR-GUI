@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Literal
+from typing import Literal
 
 from bell.avr.serial.pcc import PeripheralControlComputer
 from PySide6 import QtCore, QtWidgets
@@ -167,7 +167,7 @@ class PCCTesterWidget(BaseTabWidget):
 
         layout.addWidget(self.reset_button, 5, 0, 1, 4)
 
-        self.servo_states: List[Literal["open", "close"]] = ["close"] * 4
+        self.servo_states: list[Literal["open", "close"]] = ["close"] * 4
         self.servo_dials = {
             0: (self.servo_1_dial, self.servo_1_number),
             1: (self.servo_2_dial, self.servo_2_number),
