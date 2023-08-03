@@ -22,6 +22,9 @@
     bell-avr-libraries = { extras = ["serial", "qt"], version = "0.2.0a4" }
     pyinstaller = "5.13.0"
     typeguard = "4.1.0"
+    # needed for pydantic 2
+    # https://github.com/pyinstaller/pyinstaller-hooks-contrib/blob/master/CHANGELOG.rst#20235-2023-07-05
+    pyinstaller-hooks-contrib = ">=2023.5"
 
 [tool.poetry.group.dev.dependencies]
     pre-commit = "3.3.3"
