@@ -24,21 +24,17 @@ repos:
     -   args:
         - --fix
         id: ruff
-    repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.270
+    repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.281
 -   hooks:
     -   id: black
     repo: https://github.com/psf/black
-    rev: 23.3.0
--   hooks:
-    -   id: pyleft
-    repo: https://github.com/nathanvaughn/pyleft
-    rev: v1.2.1
+    rev: 23.7.0
 -   hooks:
     -   id: pyright
     repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.311
+    rev: v1.1.318
 -   hooks:
     -   id: markdownlint
     repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.34.0
+    rev: v0.35.0

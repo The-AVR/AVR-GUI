@@ -1,6 +1,6 @@
 import contextlib
 import os
-from typing import Optional
+from typing import Any, Optional
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -10,7 +10,7 @@ from app.lib.directory_config import IMG_DIR
 
 class IntLineEdit(QtWidgets.QLineEdit):
     def __init__(
-        self, *args, min_value: int = 0, max_value: int = 1000000, **kwargs
+        self, *args: Any, min_value: int = 0, max_value: int = 1000000, **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
 
@@ -22,7 +22,11 @@ class IntLineEdit(QtWidgets.QLineEdit):
 
 class DoubleLineEdit(QtWidgets.QLineEdit):
     def __init__(
-        self, *args, min_value: float = 0.0, max_value: float = 100.0, **kwargs
+        self,
+        *args: Any,
+        min_value: float = 0.0,
+        max_value: float = 100.0,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
 
@@ -35,7 +39,9 @@ class DoubleLineEdit(QtWidgets.QLineEdit):
 
 
 class DisplayLineEdit(QtWidgets.QLineEdit):
-    def __init__(self, *args, round_digits: Optional[int] = 4, **kwargs) -> None:
+    def __init__(
+        self, *args: Any, round_digits: Optional[int] = 4, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
 
         self.round_digits = round_digits

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-from typing import List
 
 from bell.avr.mqtt.payloads import (
     AVRAutonomousBuildingDisable,
@@ -52,7 +51,7 @@ class AutonomyWidget(BaseTabWidget):
         # ==========================
         # Buildings
         self.number_of_buildings = 6
-        self.building_labels: List[QtWidgets.QLabel] = []
+        self.building_labels: list[QtWidgets.QLabel] = []
 
         buildings_groupbox = QtWidgets.QGroupBox("Buildings")
         buildings_layout = QtWidgets.QVBoxLayout()

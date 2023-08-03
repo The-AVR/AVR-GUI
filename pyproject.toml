@@ -8,30 +8,34 @@
     authors     = ["Nathan Vaughn <nvaughn51@gmail.com>"]
 
 [tool.poetry.dependencies]
-    python             = ">=3.9,<3.12"
-    numpy              = "^1.24.2"
-    scipy              = "^1.10.1"
-    colour             = "^0.1.5"
-    loguru             = "^0.7.0"
+    python = ">=3.9,<3.12"
+    numpy = "1.25.2"
+    scipy = "1.11.1"
+    colour = "0.1.5"
+    loguru = "0.7.0"
     pyside6-essentials = [
         # dark mode is buggy on linux with 6.5.0
-        {version = "<6.5", markers = "sys_platform != 'win32'"},
-        {version = ">=6.5", markers = "sys_platform == 'win32'"}
+        { version = "<6.5", markers = "sys_platform != 'win32'" },
+        { version = ">=6.5", markers = "sys_platform == 'win32'" },
     ]
-    paho-mqtt          = "^1.6.1"
-    bell-avr-libraries = { extras = ["serial", "qt"], version = "0.2.0a3" }
-    pyinstaller        = "5.11.0"
-    typeguard          = "4.0.0"
+    paho-mqtt = "^1.6.1"
+    bell-avr-libraries = { extras = ["serial", "qt"], version = "0.2.0a4" }
+    pyinstaller = "5.13.0"
+    typeguard = "4.1.0"
+    # needed for pydantic 2
+    # https://github.com/pyinstaller/pyinstaller-hooks-contrib/blob/master/CHANGELOG.rst#20235-2023-07-05
+    pyinstaller-hooks-contrib = ">=2023.5"
 
 [tool.poetry.group.dev.dependencies]
-    pre-commit = "3.3.2"
+    pre-commit = "3.3.3"
     pytest-cov = "4.1.0"
-    pytest     = "^7.2.1"
+    pytest     = "7.4.0"
 
 [tool.pyright]
-    typeCheckingMode = "basic"
-    venvPath         = "."
-    venv             = ".venv"
+    typeCheckingMode           = "basic"
+    venvPath                   = "."
+    venv                       = ".venv"
+    reportMissingParameterType = true
 
 [tool.ruff]
     ignore = ["E501"]
