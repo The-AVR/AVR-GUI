@@ -19,7 +19,7 @@
         { version = ">=6.5", markers = "sys_platform == 'win32'" },
     ]
     paho-mqtt = "^1.6.1"
-    bell-avr-libraries = { extras = ["serial", "qt"], version = "0.2.0a3" }
+    bell-avr-libraries = { extras = ["serial", "qt"], version = "0.2.0a4" }
     pyinstaller = "5.13.0"
     typeguard = "4.1.0"
 
