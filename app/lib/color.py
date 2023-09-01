@@ -15,7 +15,7 @@ class Color(colour.Color):
 
     @property
     def rgb_255(self) -> tuple[int, int, int]:
-        return tuple(round(i * 255) for i in self.rgb)
+        return tuple(round(i * 255) for i in self.rgb)  # type: ignore
 
     def range_to(self, value: Any, steps: int) -> Generator[Color, Any, None]:
         for hsl in colour.color_scale(self._hsl, Color(value).hsl, steps - 1):
