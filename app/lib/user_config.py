@@ -1,7 +1,7 @@
 import contextlib
 import json
 import os
-from typing import Any, Optional
+from typing import Any
 
 import typeguard
 
@@ -10,9 +10,6 @@ from app.lib.directory_config import ROOT_DIR
 
 class _UserConfig:
     config_file = os.path.join(ROOT_DIR, "settings.json")
-
-    def __init__(self):
-        self.__file_cache: Optional[dict] = None
 
     def __read(self) -> dict:
         # if the file does not exist, return an empty dict

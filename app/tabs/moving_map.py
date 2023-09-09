@@ -1,8 +1,16 @@
+from __future__ import annotations
+
 import math
 import os
 from typing import Optional
 
-from bell.avr.mqtt.payloads import AVRFCMAttitudeEulerDegrees, AVRFCMPositionLocal
+from bell.avr.mqtt.payloads import (
+    AVRFCMActionTakeoff,
+    AVRFCMAirborne,
+    AVRFCMAttitudeEulerDegrees,
+    AVRFCMGoToLocal,
+    AVRFCMPositionLocal,
+)
 from PySide6 import QtCore, QtGui, QtSvgWidgets, QtWidgets
 
 from app.lib.calc import constrain, normalize_value
@@ -361,11 +369,16 @@ class InfiniteGridGraphicsScene(QtWidgets.QGraphicsScene):
 
 
 class MovingMapGraphicsWidget(QtWidgets.QWidget):
-    def __init__(self, parent: Optional[QtWidgets.QWidget]) -> None:
+    def __init__(self, parent: MovingMapWidget) -> None:
         super().__init__(parent)
+        self._parent = parent
 
         # record all trails so they can be cleared
         self._tracks: list[QtWidgets.QGraphicsLineItem] = []
+
+        # record drone state
+        self.drone_airborne: bool = False
+        self.drone_d: float = 0
 
         # =========================
 
@@ -387,6 +400,19 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
             -self.home_icon.boundingRect().height() / 2,
         )
         self.home_icon.setZValue(-10)
+
+        # add unit system labels
+        self.pos_x_label = self.canvas.addText("N +")
+        self.pos_x_label.setPos(-12, -70)
+
+        self.neg_x_label = self.canvas.addText("N -")
+        self.neg_x_label.setPos(-12, 45)
+
+        self.pos_y_label = self.canvas.addText("E+")
+        self.pos_y_label.setPos(48, -20)
+
+        self.neg_y_label = self.canvas.addText("E-")
+        self.neg_y_label.setPos(-70, -20)
 
         # add drone icon
         self.drone_icon = ResizedQGraphicsSvgItem(
@@ -490,6 +516,9 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
             QtGui.QGuiApplication.processEvents()
             self.view.centerOn(self.drone_icon)
 
+        # update cache
+        self.drone_d = z
+
     def update_drone_attitude(self, yaw: float) -> None:
         """
         Update euler attitude information.
@@ -508,6 +537,50 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
 
         self.clear_tracks()
 
+    def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
+        # map the coordinate on the widget to within the scene.
+        # this *mostly* takes care of the zoom
+        local_coord = self.view.mapToScene(event.pos())
+
+        # invert and then divide by pixels per meter
+        local_coord_n = -local_coord.y() / self.canvas.PIXELS_PER_METER
+        local_coord_e = local_coord.x() / self.canvas.PIXELS_PER_METER
+
+        menu = QtWidgets.QMenu()
+
+        if self.drone_airborne:
+            action1 = QtGui.QAction("Goto")
+            action1.triggered.connect(
+                lambda: self._parent.send_message(
+                    "avr/fcm/action/goto/local",
+                    AVRFCMGoToLocal(
+                        n=local_coord_n,
+                        e=local_coord_e,
+                        d=self.drone_d,  # use current altitude
+                        hdg=None,  # use vehicle's current heading
+                        relative=False,
+                    ),
+                )
+            )
+            menu.addAction(action1)
+
+            action2 = QtGui.QAction("Land")
+            action2.triggered.connect(
+                lambda: self._parent.send_message("avr/fcm/action/land")
+            )
+            menu.addAction(action2)
+
+        else:
+            action3 = QtGui.QAction("Takeoff")
+            action3.triggered.connect(
+                lambda: self._parent.send_message(
+                    "avr/fcm/action/takeoff", AVRFCMActionTakeoff(rel_alt=3)
+                )
+            )
+            menu.addAction(action3)
+
+        menu.exec_(self.mapToGlobal(event.pos()))
+
 
 class MovingMapWidget(BaseTabWidget):
     def __init__(self, parent: QtWidgets.QWidget) -> None:
@@ -516,6 +589,7 @@ class MovingMapWidget(BaseTabWidget):
         self.topic_callbacks = {
             "avr/fcm/attitude/euler/degrees": self.update_euler_attitude,
             "avr/fcm/position/local": self.update_position_local,
+            "avr/fcm/airborne": self.update_airborne_state,
         }
 
         self.follow_drone = True
@@ -583,6 +657,12 @@ class MovingMapWidget(BaseTabWidget):
         """
         self.moving_map_widget.update_drone_position(payload.n, payload.e, payload.d)
         self.altitude_indicator.set_altitude(payload.d)
+
+    def update_airborne_state(self, payload: AVRFCMAirborne) -> None:
+        """
+        Update the drone's current in air state
+        """
+        self.moving_map_widget.drone_airborne = payload.airborne
 
     def clear(self) -> None:
         """
