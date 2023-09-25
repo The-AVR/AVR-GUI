@@ -20,6 +20,7 @@ from app.lib.color_config import (
     ColorConfig,
 )
 from app.lib.directory_config import IMG_DIR
+from app.lib.user_config import UserConfig
 from app.tabs.base import BaseTabWidget
 
 
@@ -378,7 +379,6 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
 
         # record drone state
         self.drone_airborne: bool = False
-        self.drone_d: float = 0
 
         # =========================
 
@@ -505,7 +505,7 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
 
         # set limit on the number of tracks that are drawn
         # too high of a limit will cause track removal to slow noticably
-        if len(self._tracks) > 5000:
+        if len(self._tracks) > UserConfig.max_moving_map_tracks:
             self.canvas.removeItem(self._tracks.pop(0))
 
         # move icon
@@ -515,9 +515,6 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
             # needed to allow time for GraphicsScene to redraw
             QtGui.QGuiApplication.processEvents()
             self.view.centerOn(self.drone_icon)
-
-        # update cache
-        self.drone_d = z
 
     def update_drone_attitude(self, yaw: float) -> None:
         """
@@ -556,7 +553,7 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
                     AVRFCMGoToLocal(
                         n=local_coord_n,
                         e=local_coord_e,
-                        d=self.drone_d,  # use current altitude
+                        d=None,  # use current altitude
                         hdg=None,  # use vehicle's current heading
                         relative=False,
                     ),
@@ -574,7 +571,8 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
             action3 = QtGui.QAction("Takeoff")
             action3.triggered.connect(
                 lambda: self._parent.send_message(
-                    "avr/fcm/action/takeoff", AVRFCMActionTakeoff(rel_alt=3)
+                    "avr/fcm/action/takeoff",
+                    AVRFCMActionTakeoff(rel_alt=UserConfig.takeoff_height),
                 )
             )
             menu.addAction(action3)
