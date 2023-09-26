@@ -485,7 +485,7 @@ class ThermalViewControlWidget(BaseTabWidget):
         image_data = deserialize_image(payload)
 
         # find lowest temp
-        self.viewer.last_lowest_temp = np.amin(image_data)
+        self.viewer.last_lowest_temp = float(np.amin(image_data))  # type: ignore
 
         # update the canvas
         self.viewer.update_canvas(image_data)

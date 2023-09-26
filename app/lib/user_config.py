@@ -1,7 +1,7 @@
 import contextlib
 import json
 import os
-from typing import Any, Optional
+from typing import Any
 
 import typeguard
 
@@ -10,9 +10,6 @@ from app.lib.directory_config import ROOT_DIR
 
 class _UserConfig:
     config_file = os.path.join(ROOT_DIR, "settings.json")
-
-    def __init__(self):
-        self.__file_cache: Optional[dict] = None
 
     def __read(self) -> dict:
         # if the file does not exist, return an empty dict
@@ -122,6 +119,23 @@ class _UserConfig:
     @joystick_inverted.setter
     def joystick_inverted(self, value: bool) -> None:
         return self.__set("joystick_inverted", value)
+
+    @property
+    def max_moving_map_tracks(self) -> int:
+        return self.__get("max_moving_map_tracks", int, 5000)
+
+    @max_moving_map_tracks.setter
+    def max_moving_map_tracks(self, value: int) -> None:
+        return self.__set("max_moving_map_tracks", value)
+
+    @property
+    def takeoff_height(self) -> int:
+        # meters
+        return self.__get("takeoff_height", int, 3)
+
+    @takeoff_height.setter
+    def takeoff_height(self, value: int) -> None:
+        return self.__set("takeoff_height", value)
 
 
 UserConfig = _UserConfig()
