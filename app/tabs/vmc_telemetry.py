@@ -124,7 +124,7 @@ class VMCTelemetryWidget(BaseTabWidget):
         loc_lla_layout.addWidget(self.loc_alt_line_edit)
 
         bottom_left_layout.addRow(
-            QtWidgets.QLabel("Global (lat, lon, alt):"), loc_lla_layout
+            QtWidgets.QLabel("Global (lat, lon, abs_alt):"), loc_lla_layout
         )
 
         bottom_layout.addWidget(bottom_left_groupbox)
@@ -302,7 +302,7 @@ class VMCTelemetryWidget(BaseTabWidget):
         """
         self.loc_lat_line_edit.setText(str(payload.lat))
         self.loc_lon_line_edit.setText(str(payload.lon))
-        self.loc_alt_line_edit.setText(str(payload.alt))
+        self.loc_alt_line_edit.setText(str(payload.abs_alt))
 
     def update_euler_attitude(self, payload: AVRFCMAttitudeEulerDegrees) -> None:
         """
@@ -312,7 +312,7 @@ class VMCTelemetryWidget(BaseTabWidget):
         self.att_p_line_edit.setText(str(payload.pitch))
         self.att_y_line_edit.setText(str(payload.yaw))
 
-    # def update_auaternion_attitude(self, payload: AvrFcmAttitudeQuaternionMessage) -> None:
+    # def update_quaternion_attitude(self, payload: AvrFcmAttitudeQuaternionMessage) -> None:
     #     """
     #     Update euler attitude information
     #     """

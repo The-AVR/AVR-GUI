@@ -1,8 +1,16 @@
+from __future__ import annotations
+
 import math
 import os
 from typing import Optional
 
-from bell.avr.mqtt.payloads import AVRFCMAttitudeEulerDegrees, AVRFCMPositionLocal
+from bell.avr.mqtt.payloads import (
+    AVRFCMActionTakeoff,
+    AVRFCMAirborne,
+    AVRFCMAttitudeEulerDegrees,
+    AVRFCMGoToLocal,
+    AVRFCMPositionLocal,
+)
 from PySide6 import QtCore, QtGui, QtSvgWidgets, QtWidgets
 
 from app.lib.calc import constrain, normalize_value
@@ -12,6 +20,7 @@ from app.lib.color_config import (
     ColorConfig,
 )
 from app.lib.directory_config import IMG_DIR
+from app.lib.user_config import UserConfig
 from app.tabs.base import BaseTabWidget
 
 
@@ -294,12 +303,13 @@ class MovingMapGraphicsView(QtWidgets.QGraphicsView):
         """
         Override the default scroll event to allow zoom in and out
         """
-        scroll_factor = 0.2
+        scroll_factor_positive = 1.2
+        scroll_factor_negative = 1 / scroll_factor_positive
 
         if event.angleDelta().y() > 0:
-            self.scale(1 + scroll_factor, 1 + scroll_factor)
+            self.scale(scroll_factor_positive, scroll_factor_positive)
         else:
-            self.scale(1 - scroll_factor, 1 - scroll_factor)
+            self.scale(scroll_factor_negative, scroll_factor_negative)
 
     def enable_panning(self) -> None:
         """
@@ -326,7 +336,7 @@ class InfiniteGridGraphicsScene(QtWidgets.QGraphicsScene):
 
     # how many pixels per meter
     PIXELS_PER_METER = 50
-    # how many meters per grid line
+    # how many meters between grid line
     LINE_METER_SPACING = 1
 
     def drawBackground(
@@ -359,13 +369,23 @@ class InfiniteGridGraphicsScene(QtWidgets.QGraphicsScene):
             if y % (self.LINE_METER_SPACING * self.PIXELS_PER_METER) == 0:
                 painter.drawLine(math.ceil(rect.left()), y, math.floor(rect.right()), y)
 
+        # draw x=0 and y=0 lines thicker
+        grid_pen.setWidth(10)
+        painter.setPen(grid_pen)
+        painter.drawLine(0, math.ceil(rect.top()), 0, math.floor(rect.bottom()))
+        painter.drawLine(math.ceil(rect.left()), 0, math.floor(rect.right()), 0)
+
 
 class MovingMapGraphicsWidget(QtWidgets.QWidget):
-    def __init__(self, parent: Optional[QtWidgets.QWidget]) -> None:
+    def __init__(self, parent: MovingMapWidget) -> None:
         super().__init__(parent)
+        self._parent = parent
 
         # record all trails so they can be cleared
         self._tracks: list[QtWidgets.QGraphicsLineItem] = []
+
+        # record drone state
+        self.drone_airborne: bool = False
 
         # =========================
 
@@ -387,6 +407,19 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
             -self.home_icon.boundingRect().height() / 2,
         )
         self.home_icon.setZValue(-10)
+
+        # add unit system labels
+        self.pos_x_label = self.canvas.addText("N +")
+        self.pos_x_label.setPos(2, -70)
+
+        self.neg_x_label = self.canvas.addText("N -")
+        self.neg_x_label.setPos(-30, 45)
+
+        self.pos_y_label = self.canvas.addText("E+")
+        self.pos_y_label.setPos(48, -23)
+
+        self.neg_y_label = self.canvas.addText("E-")
+        self.neg_y_label.setPos(-70, -1)
 
         # add drone icon
         self.drone_icon = ResizedQGraphicsSvgItem(
@@ -479,7 +512,7 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
 
         # set limit on the number of tracks that are drawn
         # too high of a limit will cause track removal to slow noticably
-        if len(self._tracks) > 5000:
+        if len(self._tracks) > UserConfig.max_moving_map_tracks:
             self.canvas.removeItem(self._tracks.pop(0))
 
         # move icon
@@ -508,6 +541,60 @@ class MovingMapGraphicsWidget(QtWidgets.QWidget):
 
         self.clear_tracks()
 
+    def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
+        # event.pos() is in the coordinate system of this widget.
+        # first, map it to the coordinate system of view port, and then the scene
+        # within the viewport, so it handles the zoom
+        local_coord = self.view.mapToScene(self.view.mapFrom(self, event.pos()))
+
+        # debugging circles
+        # from app.lib.color_config import RED_COLOR
+        # temp_pen = QtGui.QPen(QtGui.QColor(*RED_COLOR.rgb_255, 200))
+        # temp_pen.setWidth(3)
+        # self.canvas.addEllipse(local_coord.x(), local_coord.y(), 1, 1, temp_pen)
+
+        # invert and then divide by pixels per meter
+        local_coord_n = -local_coord.y() / self.canvas.PIXELS_PER_METER
+        local_coord_e = local_coord.x() / self.canvas.PIXELS_PER_METER
+
+        menu = QtWidgets.QMenu()
+
+        if self.drone_airborne:
+            action1 = QtGui.QAction(
+                f"Goto {round(local_coord_n, 1)}, {round(local_coord_e, 1)}"
+            )
+            action1.triggered.connect(
+                lambda: self._parent.send_message(
+                    "avr/fcm/action/goto/local",
+                    AVRFCMGoToLocal(
+                        n=local_coord_n,
+                        e=local_coord_e,
+                        d=None,  # use current altitude
+                        hdg=None,  # use vehicle's current heading
+                        relative=False,
+                    ),
+                )
+            )
+            menu.addAction(action1)
+
+            action2 = QtGui.QAction("Land at current positon")
+            action2.triggered.connect(
+                lambda: self._parent.send_message("avr/fcm/action/land")
+            )
+            menu.addAction(action2)
+
+        else:
+            action3 = QtGui.QAction("Takeoff")
+            action3.triggered.connect(
+                lambda: self._parent.send_message(
+                    "avr/fcm/action/takeoff",
+                    AVRFCMActionTakeoff(rel_alt=UserConfig.takeoff_height),
+                )
+            )
+            menu.addAction(action3)
+
+        menu.exec_(self.mapToGlobal(event.pos()))
+
 
 class MovingMapWidget(BaseTabWidget):
     def __init__(self, parent: QtWidgets.QWidget) -> None:
@@ -516,6 +603,7 @@ class MovingMapWidget(BaseTabWidget):
         self.topic_callbacks = {
             "avr/fcm/attitude/euler/degrees": self.update_euler_attitude,
             "avr/fcm/position/local": self.update_position_local,
+            "avr/fcm/airborne": self.update_airborne_state,
         }
 
         self.follow_drone = True
@@ -583,6 +671,12 @@ class MovingMapWidget(BaseTabWidget):
         """
         self.moving_map_widget.update_drone_position(payload.n, payload.e, payload.d)
         self.altitude_indicator.set_altitude(payload.d)
+
+    def update_airborne_state(self, payload: AVRFCMAirborne) -> None:
+        """
+        Update the drone's current in air state
+        """
+        self.moving_map_widget.drone_airborne = payload.airborne
 
     def clear(self) -> None:
         """

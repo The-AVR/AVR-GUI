@@ -27,6 +27,7 @@ class MQTTClient(BaseMQTTClient, QtCore.QObject):
     on_message_signal: QtCore.SignalInstance = QtCore.Signal(str, bytes)  # type: ignore
 
     def __init__(self) -> None:
+        super().__init__()
         super(BaseMQTTClient, self).__init__()
 
         self.subscribe_to_all_topics = True
@@ -44,7 +45,9 @@ class MQTTClient(BaseMQTTClient, QtCore.QObject):
         super().on_disconnect(*args)
         self.connection_state.emit(ConnectionState.disconnected)
 
-    def connect_(self, host: str, port: int) -> None:
+    def connect2(self, host: str, port: int) -> None:
+        # connect_ is already a method that we shouldn't overwrite
+
         # do nothing on empty sring
         if not host:
             return
@@ -124,7 +127,7 @@ class MQTTConnectionWidget(QtWidgets.QWidget):
         # set up connections
         self.hostname_line_edit.returnPressed.connect(self.connect_button.click)  # type: ignore
         self.connect_button.clicked.connect(  # type: ignore
-            lambda: self.mqtt_client.connect_(
+            lambda: self.mqtt_client.connect2(
                 self.hostname_line_edit.text(), int(self.port_line_edit.text())
             )
         )

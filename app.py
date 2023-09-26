@@ -161,6 +161,10 @@ class MainWindow(QtWidgets.QWidget):
             self.moving_map_widget.on_message
         )
 
+        self.moving_map_widget.send_message_signal.connect(
+            self.main_connection_widget.mqtt_connection_widget.mqtt_client._publish
+        )
+
         # vmc control widget
 
         self.vmc_control_widget = VMCControlWidget(self)
