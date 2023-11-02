@@ -24,12 +24,9 @@ repos:
     -   args:
         - --fix
         id: ruff
+    -   id: ruff-format
     repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.0.291
--   hooks:
-    -   id: black
-    repo: https://github.com/psf/black
-    rev: 23.9.1
 -   hooks:
     -   id: pyright
     repo: https://github.com/RobertCraigie/pyright-python

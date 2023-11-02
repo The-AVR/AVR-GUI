@@ -50,21 +50,27 @@ class VMCControlWidget(BaseTabWidget):
         green_led_button.setStyleSheet(
             f"background-color: {GREEN_COLOR.hex}; color: {BLACK_COLOR.hex}"
         )
-        green_led_button.clicked.connect(lambda: self.set_led((255, *GREEN_COLOR.rgb_255)))  # type: ignore
+        green_led_button.clicked.connect(
+            lambda: self.set_led((255, *GREEN_COLOR.rgb_255))
+        )  # type: ignore
         led_layout.addWidget(green_led_button)
 
         blue_led_button = QtWidgets.QPushButton("Blue")
         blue_led_button.setStyleSheet(
             f"background-color: {BLUE_COLOR.hex}; color: {WHITE_COLOR.hex}"
         )
-        blue_led_button.clicked.connect(lambda: self.set_led((255, *BLUE_COLOR.rgb_255)))  # type: ignore
+        blue_led_button.clicked.connect(
+            lambda: self.set_led((255, *BLUE_COLOR.rgb_255))
+        )  # type: ignore
         led_layout.addWidget(blue_led_button)
 
         clear_led_button = QtWidgets.QPushButton("Clear")
         clear_led_button.setStyleSheet(
             f"background-color: {WHITE_COLOR.hex}; color: {BLACK_COLOR.hex}"
         )
-        clear_led_button.clicked.connect(lambda: self.set_led((0, *BLACK_COLOR.rgb_255)))  # type: ignore
+        clear_led_button.clicked.connect(
+            lambda: self.set_led((0, *BLACK_COLOR.rgb_255))
+        )  # type: ignore
         led_layout.addWidget(clear_led_button)
 
         layout.addWidget(led_groupbox, 0, 0, 3, 1)
