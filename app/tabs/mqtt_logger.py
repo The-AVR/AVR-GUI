@@ -35,7 +35,11 @@ class LogFileViewWidget(QtWidgets.QTreeView):
         self.sortByColumn(0, QtCore.Qt.SortOrder.DescendingOrder)
 
         # open files on double click
-        self.doubleClicked.connect(lambda index: os.startfile(self.filesystem_model.filePath(index)))  # type: ignore
+        if os.name == "nt":
+            # only available on Windows
+            self.doubleClicked.connect(
+                lambda index: os.startfile(self.filesystem_model.filePath(index))
+            )
 
     def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
         # override the normal right click event.
@@ -50,7 +54,9 @@ class LogFileViewWidget(QtWidgets.QTreeView):
 
         # add delete action
         delete_file_action = QtGui.QAction("Delete", self)
-        delete_file_action.triggered.connect(lambda: self.filesystem_model.remove(selected_index))  # type: ignore
+        delete_file_action.triggered.connect(
+            lambda: self.filesystem_model.remove(selected_index)
+        )  # type: ignore
         menu.addAction(delete_file_action)
 
         menu.popup(QtGui.QCursor.pos())

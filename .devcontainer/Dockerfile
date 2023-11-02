@@ -1,4 +1,4 @@
-FROM docker.io/library/python:3.10
+FROM docker.io/library/python:3.12
 
 WORKDIR /work
 ENV PRE_COMMIT_HOME .cache/pre-commit

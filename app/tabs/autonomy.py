@@ -75,11 +75,15 @@ class AutonomyWidget(BaseTabWidget):
             building_groupbox.setLayout(building_layout)
 
             building_enable_button = QtWidgets.QPushButton("Enable Drop")
-            building_enable_button.clicked.connect(functools.partial(self.enable_building_drop, i))  # type: ignore
+            building_enable_button.clicked.connect(
+                functools.partial(self.enable_building_drop, i)
+            )  # type: ignore
             building_layout.addWidget(building_enable_button)
 
             building_disable_button = QtWidgets.QPushButton("Disable Drop")
-            building_disable_button.clicked.connect(functools.partial(self.disable_building_drop, i))  # type: ignore
+            building_disable_button.clicked.connect(
+                functools.partial(self.disable_building_drop, i)
+            )  # type: ignore
             building_layout.addWidget(building_disable_button)
 
             building_label = QtWidgets.QLabel()
