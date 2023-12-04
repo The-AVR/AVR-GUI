@@ -84,11 +84,15 @@ class ExpandCollapseQTreeWidget(QtWidgets.QTreeWidget):
         selected_item = self.itemAt(event.pos())
 
         expand_children_action = QtGui.QAction("Expand Children", self)
-        expand_children_action.triggered.connect(lambda: self.expand_children(selected_item, True))  # type: ignore
+        expand_children_action.triggered.connect(
+            lambda: self.expand_children(selected_item, True)
+        )  # type: ignore
         menu.addAction(expand_children_action)
 
         collapse_children_action = QtGui.QAction("Collapse Children", self)
-        collapse_children_action.triggered.connect(lambda: self.expand_children(selected_item, False))  # type: ignore
+        collapse_children_action.triggered.connect(
+            lambda: self.expand_children(selected_item, False)
+        )  # type: ignore
         menu.addAction(collapse_children_action)
 
         menu.addSeparator()
@@ -98,11 +102,15 @@ class ExpandCollapseQTreeWidget(QtWidgets.QTreeWidget):
         menu.addAction(copy_topic_action)
 
         copy_payload_action = QtGui.QAction("Copy Payload", self)
-        copy_payload_action.triggered.connect(lambda: self.copy_payload.emit(selected_item))  # type: ignore
+        copy_payload_action.triggered.connect(
+            lambda: self.copy_payload.emit(selected_item)
+        )  # type: ignore
         menu.addAction(copy_payload_action)
 
         preload_data_action = QtGui.QAction("Preload Data", self)
-        preload_data_action.triggered.connect(lambda: self.preload_data.emit(selected_item))  # type: ignore
+        preload_data_action.triggered.connect(
+            lambda: self.preload_data.emit(selected_item)
+        )  # type: ignore
         menu.addAction(preload_data_action)
 
         menu.popup(QtGui.QCursor.pos())
@@ -224,7 +232,8 @@ class MQTTDebugWidget(BaseTabWidget):
         self.payload_text_edit.textChanged.connect(self.payload_text_edit_changed)  # type: ignore
         self.send_button.clicked.connect(  # type: ignore
             lambda: self.send_message(
-                self.topic_combo_box.currentText(), self.payload_text_edit.toPlainText()  # type: ignore
+                self.topic_combo_box.currentText(),  # type: ignore
+                self.payload_text_edit.toPlainText(),  # type: ignore
             )
         )
 
@@ -367,7 +376,9 @@ class MQTTDebugWidget(BaseTabWidget):
         # start new timer to clear background
         timer = QtCore.QTimer()
         # color doesn't matter, just 100% transparent
-        timer.timeout.connect(lambda: self.set_item_background(item, QtGui.QColor(0, 0, 0, 0)))  # type: ignore
+        timer.timeout.connect(
+            lambda: self.set_item_background(item, QtGui.QColor(0, 0, 0, 0))
+        )  # type: ignore
         timer.setSingleShot(True)
         timer.start(100)
 

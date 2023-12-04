@@ -8,33 +8,30 @@ repos:
     -   id: check-merge-conflict
     -   id: mixed-line-ending
     repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
 -   hooks:
     -   id: poetry-check
     -   args:
-        - --no-update
+        -   --no-update
         id: poetry-lock
     repo: https://github.com/python-poetry/poetry
-    rev: 1.6.1
+    rev: 1.7.1
 -   hooks:
     -   id: absolufy-imports
     repo: https://github.com/MarcoGorelli/absolufy-imports
     rev: v0.3.1
 -   hooks:
     -   args:
-        - --fix
+        -   --fix
         id: ruff
+    -   id: ruff-format
     repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.286
--   hooks:
-    -   id: black
-    repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: v0.1.6
 -   hooks:
     -   id: pyright
     repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.325
+    rev: v1.1.338
 -   hooks:
     -   id: markdownlint
     repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.35.0
+    rev: v0.37.0
