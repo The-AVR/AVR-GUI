@@ -12,6 +12,7 @@ from app.lib.enums import ConnectionState
 from app.lib.user_config import UserConfig
 from app.lib.widgets import IntLineEdit, PrePopupComboBox
 
+from serial.tools.list_ports import comports
 
 class SerialClient(QtCore.QObject):
     # This class is a more convential client object that gets passed around.
@@ -145,7 +146,8 @@ class SerialConnectionWidget(QtWidgets.QWidget):
 
     def update_serial_port_list(self) -> None:
         self.com_port_combo.clear()
-        self.com_port_combo.addItems(list_serial_ports())
+        ports = [port.device for port in comports()]
+        self.com_port_combo.addItems(ports)
 
     def set_connected_state(self, connection_state: ConnectionState) -> None:
         connected = connection_state == ConnectionState.connected
